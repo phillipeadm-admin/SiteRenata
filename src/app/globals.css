@@ -190,6 +190,14 @@ body {
   background: var(--bg-card);
 }
 
+.nav-link .nav-label {
+  transition: var(--transition);
+}
+
+.nav-link:hover .nav-label {
+  transform: translateX(5px);
+}
+
 .nav-link.active {
   color: var(--text-primary);
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(59, 130, 246, 0.1));

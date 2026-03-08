@@ -53,7 +53,7 @@ export default function Sidebar() {
                     className={`nav-link nav-link-incluir ${pathname.startsWith('/cadastros') ? 'active' : ''}`}
                 >
                     <span className="nav-icon">➕</span>
-                    Incluir
+                    <span className="nav-label">Incluir</span>
                 </Link>
 
                 <div className="nav-section-label" style={{ marginTop: '8px' }}>Menu Principal</div>
@@ -64,7 +64,7 @@ export default function Sidebar() {
                         className={`nav-link ${pathname === item.href || pathname.startsWith(item.href) ? 'active' : ''}`}
                     >
                         <span className="nav-icon">{item.icon}</span>
-                        {item.label}
+                        <span className="nav-label">{item.label}</span>
                     </Link>
                 ))}
             </nav>
@@ -92,7 +92,7 @@ export default function Sidebar() {
                             onClick={() => setShowUserModal(true)}
                         >
                             <span className="nav-icon">👤</span>
-                            Gerenciar Sistema
+                            <span className="nav-label">Gerenciar Sistema</span>
                         </button>
                     </>
                 )}
@@ -118,7 +118,7 @@ export default function Sidebar() {
                     title="Encerrar sessão"
                 >
                     <span className="nav-icon">🚪</span>
-                    Sair
+                    <span className="nav-label">Sair</span>
                 </button>
                 <div style={{ fontSize: '10px', color: 'var(--text-muted)', textAlign: 'center' }}>
                     © 2026 — Gestão Pessoal
