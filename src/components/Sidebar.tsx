@@ -15,7 +15,12 @@ const navItems = [
     { icon: '📁', label: 'Arquivo', href: '/arquivo' },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+    isOpen?: boolean;
+    onClose?: () => void;
+}
+
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     const pathname = usePathname();
     const router = useRouter();
     const { user, users, logout, isAdmin } = useAuth();
@@ -34,18 +39,21 @@ export default function Sidebar() {
     }) : [];
 
     return (
-        <aside className="sidebar">
-            <div className="sidebar-header">
-                <div className="sidebar-logo">
-                    <div className="sidebar-logo-icon">⚡</div>
-                    <div>
-                        <div className="sidebar-logo-text">GestãoPro</div>
-                        <div className="sidebar-logo-sub">Controle de Processos</div>
+        <>
+            <div className={`sidebar-overlay ${isOpen ? 'show' : ''}`} onClick={onClose} />
+            <aside className={`sidebar ${isOpen ? 'show' : ''}`}>
+                <div className="sidebar-header">
+                    <div className="sidebar-logo">
+                        <div className="sidebar-logo-icon">⚡</div>
+                        <div style={{ flex: 1 }}>
+                            <div className="sidebar-logo-text">GestãoPro</div>
+                            <div className="sidebar-logo-sub">Controle de Processos</div>
+                        </div>
+                        <button className="mobile-close-btn" onClick={onClose}>✕</button>
                     </div>
                 </div>
-            </div>
 
-            <nav className="sidebar-nav">
+                <nav className="sidebar-nav">
                 {/* Botão INCLUIR destacado */}
                 <div className="nav-section-label">Cadastros</div>
                 <Link
@@ -129,5 +137,6 @@ export default function Sidebar() {
                 <UserManagementModal onClose={() => setShowUserModal(false)} />
             )}
         </aside>
+        </>
     );
 }

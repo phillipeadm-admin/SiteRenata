@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 
@@ -9,12 +9,18 @@ import { useAuth } from '@/hooks/AuthContext';
 export default function AppLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const { authenticated, loading } = useAuth();
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     useEffect(() => {
         if (!loading && !authenticated) {
             router.replace('/login');
         }
     }, [loading, authenticated, router]);
+
+    // Fecha a sidebar ao mudar de rota em dispositivos móveis
+    useEffect(() => {
+        setIsSidebarOpen(false);
+    }, [router]);
 
     if (loading) {
         return (
@@ -28,7 +34,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
     return (
         <div className="app-layout">
-            <Sidebar />
+            <button 
+                className="mobile-menu-toggle" 
+                onClick={() => setIsSidebarOpen(true)}
+                aria-label="Abrir menu"
+            >
+                ☰
+            </button>
+            <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
             <div className="main-content">{children}</div>
         </div>
     );
