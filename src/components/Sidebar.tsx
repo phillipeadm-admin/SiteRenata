@@ -17,13 +17,20 @@ const navItems = [
 export default function Sidebar() {
     const pathname = usePathname();
     const router = useRouter();
-    const { user, logout, isAdmin } = useAuth();
+    const { user, users, logout, isAdmin } = useAuth();
     const [showUserModal, setShowUserModal] = useState(false);
 
     const handleLogout = () => {
         logout();
         router.replace('/login');
     };
+
+    const onlineUsers = isAdmin ? users.filter(u => {
+        if (!u.lastSeen) return false;
+        // Considera online se o heartbeat ocorreu nos últimos 90 segundos
+        const diff = new Date().getTime() - new Date(u.lastSeen).getTime();
+        return diff < 90000;
+    }) : [];
 
     return (
         <aside className="sidebar">
@@ -63,14 +70,30 @@ export default function Sidebar() {
 
             <div className="sidebar-footer" style={{ padding: '20px 16px' }}>
                 {isAdmin && (
-                    <button 
-                        className="nav-link"
-                        style={{ width: '100%', marginBottom: '12px', border: '1px solid var(--border)', background: 'rgba(99,102,241,0.05)', color: 'var(--accent-purple)' }}
-                        onClick={() => setShowUserModal(true)}
-                    >
-                        <span className="nav-icon">👤</span>
-                        Cadastrar Usuário
-                    </button>
+                    <>
+                        <div className="nav-section-label" style={{ marginBottom: '8px', color: 'var(--text-secondary)' }}>👥 Online ({onlineUsers.length})</div>
+                        <div style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            {onlineUsers.length === 0 ? (
+                                <div style={{ fontSize: '10px', color: 'var(--text-muted)', paddingLeft: '8px' }}>Nenhum outro usuário</div>
+                            ) : (
+                                onlineUsers.map(u => (
+                                    <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 8px', borderRadius: '6px', background: 'rgba(99,102,241,0.03)' }}>
+                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 6px rgba(16,185,129,0.4)' }} />
+                                        <span style={{ fontSize: '11px', color: 'var(--text-primary)', fontWeight: 500 }}>{u.nome}</span>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+
+                        <button 
+                            className="nav-link"
+                            style={{ width: '100%', marginBottom: '12px', border: '1px solid var(--border)', background: 'rgba(99,102,241,0.05)', color: 'var(--accent-purple)' }}
+                            onClick={() => setShowUserModal(true)}
+                        >
+                            <span className="nav-icon">👤</span>
+                            Gerenciar Sistema
+                        </button>
+                    </>
                 )}
 
                 <div style={{
