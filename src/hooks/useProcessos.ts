@@ -1,0 +1,113 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/lib/supabase';
+import { Processo, StatusKanban } from '@/lib/types';
+
+export function useProcessos() {
+    const [processos, setProcessos] = useState<Processo[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const fetchProcessos = useCallback(async () => {
+        const { data, error } = await supabase
+            .from('renata_processos')
+            .select('*')
+            .order('created_at', { ascending: false });
+        
+        if (data && !error) {
+            setProcessos(data as Processo[]);
+        }
+    }, []);
+
+    // Carregar e Realtime
+    useEffect(() => {
+        fetchProcessos().finally(() => setLoading(false));
+
+        const channel = supabase
+            .channel('renata_processos_changes')
+            .on('postgres_changes', { 
+                event: '*', 
+                schema: 'public', 
+                table: 'renata_processos' 
+            }, () => {
+                fetchProcessos();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [fetchProcessos]);
+
+    const criarProcesso = useCallback(
+        async (data: Partial<Processo>) => {
+            const novo = {
+                assunto: data.assunto,
+                tipo_assunto: data.tipo_assunto,
+                responsavel_execucao: data.responsavel_execucao,
+                responsavel_revisao: data.responsavel_revisao ?? null,
+                data_entrada: data.data_entrada,
+                data_prazo: data.data_prazo ?? null,
+                data_finalizacao: null,
+                status_kanban: data.status_kanban ?? 'triagem',
+                observacoes: data.observacoes ?? null,
+                numero_processo: data.numero_processo ?? null,
+                datas_intermediarias: data.datas_intermediarias ?? null,
+                updated_at: new Date().toISOString()
+            };
+
+            await supabase
+                .from('renata_processos')
+                .insert([novo]);
+            
+            await fetchProcessos();
+        },
+        [fetchProcessos]
+    );
+
+    const atualizarProcesso = useCallback(
+        async (id: string, data: Partial<Processo>) => {
+            await supabase
+                .from('renata_processos')
+                .update({ ...data, updated_at: new Date().toISOString() })
+                .eq('id', id);
+            
+            await fetchProcessos();
+        },
+        [fetchProcessos]
+    );
+
+    const excluirProcesso = useCallback(
+        async (id: string) => {
+            await supabase
+                .from('renata_processos')
+                .delete()
+                .eq('id', id);
+            
+            await fetchProcessos();
+        },
+        [fetchProcessos]
+    );
+
+    const moverKanban = useCallback(
+        async (id: string, novoStatus: StatusKanban) => {
+            const data: Partial<Processo> = {
+                status_kanban: novoStatus,
+                data_finalizacao:
+                    novoStatus === 'finalizado' ? new Date().toISOString() : null,
+            };
+            await atualizarProcesso(id, data);
+        },
+        [atualizarProcesso]
+    );
+
+    return {
+        processos,
+        loading,
+        criarProcesso,
+        atualizarProcesso,
+        excluirProcesso,
+        moverKanban,
+        refresh: fetchProcessos
+    };
+}

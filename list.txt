@@ -1,0 +1,12 @@
+﻿C:\Users\phill\OneDrive\Desktop\SiteRenata\src\app
+C:\Users\phill\OneDrive\Desktop\SiteRenata\src\components
+C:\Users\phill\OneDrive\Desktop\SiteRenata\src\hooks
+C:\Users\phill\OneDrive\Desktop\SiteRenata\src\lib
+C:\Users\phill\OneDrive\Desktop\SiteRenata\src\app\(app)
+C:\Users\phill\OneDrive\Desktop\SiteRenata\src\app\login
+C:\Users\phill\OneDrive\Desktop\SiteRenata\src\app\(app)\cadastros
+C:\Users\phill\OneDrive\Desktop\SiteRenata\src\app\(app)\dashboard
+C:\Users\phill\OneDrive\Desktop\SiteRenata\src\app\(app)\kanban
+C:\Users\phill\OneDrive\Desktop\SiteRenata\src\app\(app)\processos
+C:\Users\phill\OneDrive\Desktop\SiteRenata\src\app\(app)\relatorios
+C:\Users\phill\OneDrive\Desktop\SiteRenata\src\app\(app)\rotinas
