@@ -102,7 +102,27 @@ export function useProcessos() {
     );
 
     return {
-        processos,
+        processos, // Todos
+        processosAtivos: processos.filter(p => {
+            if (p.status_kanban !== 'finalizado') return true;
+            if (!p.data_finalizacao) return true;
+            
+            const trintaDiasEmMs = 30 * 24 * 60 * 60 * 1000;
+            const dataFinal = new Date(p.data_finalizacao).getTime();
+            const agora = new Date().getTime();
+            
+            return (agora - dataFinal) < trintaDiasEmMs;
+        }),
+        processosArquivados: processos.filter(p => {
+            if (p.status_kanban !== 'finalizado') return false;
+            if (!p.data_finalizacao) return false;
+            
+            const trintaDiasEmMs = 30 * 24 * 60 * 60 * 1000;
+            const dataFinal = new Date(p.data_finalizacao).getTime();
+            const agora = new Date().getTime();
+            
+            return (agora - dataFinal) >= trintaDiasEmMs;
+        }),
         loading,
         criarProcesso,
         atualizarProcesso,

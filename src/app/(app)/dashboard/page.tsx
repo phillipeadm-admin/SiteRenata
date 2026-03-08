@@ -12,11 +12,11 @@ import {
 } from 'recharts';
 
 export default function DashboardPage() {
-    const { processos, loading: loadingP } = useProcessos();
+    const { processosAtivos, loading: loadingP } = useProcessos();
     const { rotinas, loading: loadingR } = useRotinas();
 
     // Consolida processos + rotinas em um único array para o dashboard
-    const todos = useMemo(() => [...processos, ...rotinas], [processos, rotinas]);
+    const todos = useMemo(() => [...processosAtivos, ...rotinas], [processosAtivos, rotinas]);
     const loading = loadingP || loadingR;
 
     const stats = useMemo(() => {

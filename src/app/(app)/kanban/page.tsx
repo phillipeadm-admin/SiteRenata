@@ -11,7 +11,7 @@ const COLUMNS: StatusKanban[] = ['triagem', 'em_execucao', 'aguardando_revisao',
 
 export default function KanbanPage() {
     const {
-        processos, loading: loadingP,
+        processosAtivos, loading: loadingP,
         criarProcesso, atualizarProcesso, excluirProcesso,
         moverKanban: moverProcesso
     } = useProcessos();
@@ -23,10 +23,10 @@ export default function KanbanPage() {
     } = useRotinas();
 
     // Set de IDs de processos para identificar a origem de cada card
-    const processoIds = useMemo(() => new Set(processos.map(p => p.id)), [processos]);
+    const processoIds = useMemo(() => new Set(processosAtivos.map(p => p.id)), [processosAtivos]);
 
     // Todos os itens juntos
-    const todos = useMemo(() => [...processos, ...rotinas], [processos, rotinas]);
+    const todos = useMemo(() => [...processosAtivos, ...rotinas], [processosAtivos, rotinas]);
     const loading = loadingP || loadingR;
 
     const [modalOpen, setModalOpen] = useState(false);
@@ -128,7 +128,7 @@ export default function KanbanPage() {
                     <p className="page-subtitle">
                         {todos.length} item{todos.length !== 1 ? 's' : ''} no total
                         <span style={{ color: 'var(--text-muted)', fontSize: '12px', marginLeft: '8px' }}>
-                            ({processos.length} processo{processos.length !== 1 ? 's' : ''} + {rotinas.length} rotina{rotinas.length !== 1 ? 's' : ''})
+                            ({processosAtivos.length} processo{processosAtivos.length !== 1 ? 's' : ''} + {rotinas.length} rotina{rotinas.length !== 1 ? 's' : ''})
                         </span>
                         <span style={{ color: 'var(--text-muted)', fontSize: '12px', marginLeft: '8px' }}>
                             — Arraste os cards entre colunas para alterar o status

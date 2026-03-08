@@ -12,6 +12,7 @@ const navItems = [
     { icon: '📋', label: 'Kanban', href: '/kanban' },
     { icon: '📊', label: 'Dashboard', href: '/dashboard' },
     { icon: '📈', label: 'Relatórios', href: '/relatorios' },
+    { icon: '📁', label: 'Arquivo', href: '/arquivo' },
 ];
 
 export default function Sidebar() {

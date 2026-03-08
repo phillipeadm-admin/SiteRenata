@@ -11,7 +11,13 @@ import { useCadastros } from '@/hooks/useCadastros';
 import { differenceInDays, format, parseISO } from 'date-fns';
 
 export default function ProcessosPage() {
-    const { processos, loading, criarProcesso, atualizarProcesso, excluirProcesso } = useProcessos();
+    const { 
+        processosAtivos, 
+        loading, 
+        criarProcesso, 
+        atualizarProcesso, 
+        excluirProcesso 
+    } = useProcessos();
     const { cadastros } = useCadastros();
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedProcesso, setSelectedProcesso] = useState<Processo | null>(null);
@@ -24,7 +30,7 @@ export default function ProcessosPage() {
     const [filtroRisco, setFiltroRisco] = useState('');
 
     const filtrados = useMemo(() => {
-        return processos.filter(p => {
+        return processosAtivos.filter(p => {
             const matchBusca = !busca ||
                 p.assunto.toLowerCase().includes(busca.toLowerCase()) ||
                 p.responsavel_execucao.toLowerCase().includes(busca.toLowerCase()) ||
@@ -35,7 +41,7 @@ export default function ProcessosPage() {
             const matchRisco = !filtroRisco || risco === filtroRisco;
             return matchBusca && matchStatus && matchTipo && matchRisco;
         });
-    }, [processos, busca, filtroStatus, filtroTipo, filtroRisco]);
+    }, [processosAtivos, busca, filtroStatus, filtroTipo, filtroRisco]);
 
     const handleSave = (data: Partial<Processo>) => {
         if (selectedProcesso) {
@@ -57,14 +63,14 @@ export default function ProcessosPage() {
     if (loading) return <div style={{ padding: 40, color: 'var(--text-secondary)' }}>⏳ Carregando...</div>;
 
     // Tipos únicos dos processos cadastrados
-    const tiposDisponiveis = Array.from(new Set(processos.map(p => p.tipo_assunto)));
+    const tiposDisponiveis = Array.from(new Set(processosAtivos.map(p => p.tipo_assunto)));
 
     return (
         <>
             <div className="page-header">
                 <div>
                     <h1 className="page-title">📁 Processos</h1>
-                    <p className="page-subtitle">{filtrados.length} de {processos.length} processos</p>
+                    <p className="page-subtitle">{filtrados.length} de {processosAtivos.length} processos</p>
                 </div>
                 <button
                     className="btn btn-primary"
