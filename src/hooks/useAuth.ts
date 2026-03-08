@@ -101,12 +101,17 @@ export function useAuth() {
                 .from('renata_usuarios')
                 .update({ lastseen: now })
                 .eq('id', user.id);
+            
+            // Força atualização da lista para o admin ver mudanças de outros usuários
+            if (user.role === 'admin') {
+                fetchUsers();
+            }
         };
 
         const interval = setInterval(heartbeat, 30000);
         heartbeat(); // Primeira execução
         return () => clearInterval(interval);
-    }, [user]);
+    }, [user, fetchUsers]);
 
     const login = async (nome: string, password: string): Promise<{ success: boolean, mustChange: boolean }> => {
         const { data, error } = await supabase
@@ -132,6 +137,7 @@ export function useAuth() {
                 lastSeen: data.lastseen
             } as Usuario;
             setUser(found);
+            await fetchUsers(); // Atualiza lista imediatamente
             return { success: true, mustChange: found.isFirstLogin };
         }
         return { success: false, mustChange: false };
@@ -146,6 +152,7 @@ export function useAuth() {
         }
         sessionStorage.removeItem(SESSION_KEY);
         setUser(null);
+        await fetchUsers(); // Atualiza lista após sair
     };
 
     const verifyAdminPin = async (pinInput: string): Promise<boolean> => {
