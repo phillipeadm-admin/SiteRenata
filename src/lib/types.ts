@@ -40,6 +40,7 @@ export interface Processo {
     observacoes: string | null;
     numero_processo: string | null;
     datas_intermediarias?: DataIntermediaria[] | null;
+    recorrente?: boolean | null;
     created_at: string;
     updated_at: string;
 }

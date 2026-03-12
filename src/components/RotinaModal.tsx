@@ -23,6 +23,7 @@ export default function RotinaModal({ rotina, onSave, onClose, onDelete }: Props
             : new Date().toISOString().slice(0, 10),
         data_prazo: rotina?.data_prazo ? rotina.data_prazo.slice(0, 10) : '',
         status_kanban: rotina?.status_kanban ?? (statusAtivos[0]?.nome ?? 'triagem'),
+        recorrente: rotina?.recorrente ?? false,
     });
 
     const [responsaveisExec, setResponsaveisExec] = useState<string[]>(
@@ -68,6 +69,7 @@ export default function RotinaModal({ rotina, onSave, onClose, onDelete }: Props
             numero_processo: undefined, // Rotinas não têm número de processo
             observacoes: form.observacoes || undefined,
             datas_intermediarias: datasValidas.length > 0 ? datasValidas : undefined,
+            recorrente: form.recorrente,
         });
         setLoading(false);
     };
@@ -234,6 +236,24 @@ export default function RotinaModal({ rotina, onSave, onClose, onDelete }: Props
                                     ))}
                                 </select>
                             </div>
+                        </div>
+
+                        {/* Recorrência */}
+                        <div style={{ marginBottom: '20px' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', userSelect: 'none' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={form.recorrente}
+                                    onChange={(e) => setForm({ ...form, recorrente: e.target.checked })}
+                                    style={{ width: '18px', height: '18px', accentColor: 'var(--accent-purple)' }}
+                                />
+                                <span style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)' }}>
+                                    🔄 Marcar como Rotina Recorrente
+                                </span>
+                            </label>
+                            <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginLeft: '26px', marginTop: '4px' }}>
+                                Use esta opção para identificar rotinas que se repetem periodicamente.
+                            </p>
                         </div>
 
                         {/* Datas Intermediárias */}

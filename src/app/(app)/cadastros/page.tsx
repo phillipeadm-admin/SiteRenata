@@ -75,7 +75,7 @@ export default function CadastrosPage() {
                             display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '10px',
                             marginBottom: '20px', padding: '16px',
                             background: 'var(--bg-secondary)', borderRadius: '12px',
-                            border: '1px solid var(--border)', alignItems: 'flex-end'
+                            border: '1px solid var(--border)', alignItems: 'start'
                         }}>
                             <div className="form-group">
                                 <label className="form-label">Nome do Tipo *</label>
@@ -136,16 +136,20 @@ export default function CadastrosPage() {
                                     {novoTipo.responsavel_revisao && <button onClick={() => setNovoTipo({...novoTipo, responsavel_revisao: ''})} style={{marginLeft: '5px', color: 'var(--accent-red)', border: 'none', background: 'none', cursor: 'pointer'}}>Limpar</button>}
                                 </div>
                             </div>
-                            <button
-                                className="btn btn-primary"
-                                disabled={!novoTipo.nome.trim()}
-                                onClick={async () => { 
-                                    await addTipo(novoTipo.nome, novoTipo.responsavel_execucao, novoTipo.responsavel_revisao); 
-                                    setNovoTipo({ nome: '', responsavel_execucao: '', responsavel_revisao: '' }); 
-                                }}
-                            >
-                                ✅ Adicionar
-                            </button>
+                            <div className="form-group">
+                                <label className="form-label" style={{ visibility: 'hidden' }}>Spacer</label>
+                                <button
+                                    className="btn btn-primary"
+                                    disabled={!novoTipo.nome.trim()}
+                                    style={{ width: '100%' }}
+                                    onClick={async () => {
+                                        await addTipo(novoTipo.nome, novoTipo.responsavel_execucao, novoTipo.responsavel_revisao);
+                                        setNovoTipo({ nome: '', responsavel_execucao: '', responsavel_revisao: '' });
+                                    }}
+                                >
+                                    ✅ Adicionar
+                                </button>
+                            </div>
                         </div>
 
                         <div className="table-wrapper">

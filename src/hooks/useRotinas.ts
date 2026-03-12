@@ -52,6 +52,7 @@ export function useRotinas() {
                 status_kanban: data.status_kanban ?? 'triagem',
                 observacoes: data.observacoes ?? null,
                 datas_intermediarias: data.datas_intermediarias ?? null,
+                recorrente: data.recorrente ?? false,
                 updated_at: new Date().toISOString()
             };
 
