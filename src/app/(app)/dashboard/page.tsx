@@ -6,6 +6,7 @@ import { useRotinas } from '@/hooks/useRotinas';
 import { useCadastros } from '@/hooks/useCadastros';
 import { calcularRisco, RISCO_LABELS, RISCO_COLORS } from '@/lib/types';
 import { differenceInDays, format, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
     ResponsiveContainer, PieChart, Pie, Cell, Legend
