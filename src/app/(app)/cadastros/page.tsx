@@ -7,7 +7,7 @@ type Aba = 'tipos' | 'responsaveis' | 'status';
 
 export default function CadastrosPage() {
     const {
-        cadastros,
+        cadastros, statusAtivos,
         addTipo, updateTipo, deleteTipo,
         addResponsavel, updateResponsavel, deleteResponsavel,
         addStatus, updateStatus, deleteStatus
