@@ -18,7 +18,7 @@ export default function ProcessosPage() {
         atualizarProcesso, 
         excluirProcesso 
     } = useProcessos();
-    const { cadastros } = useCadastros();
+    const { cadastros, statusAtivos } = useCadastros();
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedProcesso, setSelectedProcesso] = useState<Processo | null>(null);
     const [deleteId, setDeleteId] = useState<string | null>(null);
