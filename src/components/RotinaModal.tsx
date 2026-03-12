@@ -57,12 +57,12 @@ export default function RotinaModal({ rotina, onSave, onClose, onDelete }: Props
         const datasValidas = datasInter.filter(d => d.data.trim() !== '');
         await onSave({
             ...form,
-            data_prazo: form.data_prazo || null,
-            responsavel_execucao: responsaveis.join(', ') || null,
-            responsavel_revisao: null,
-            numero_processo: null, // Rotinas não têm número de processo
-            observacoes: form.observacoes || null,
-            datas_intermediarias: datasValidas.length > 0 ? datasValidas : null,
+            data_prazo: form.data_prazo || undefined,
+            responsavel_execucao: responsaveis.join(', ') || undefined,
+            responsavel_revisao: undefined,
+            numero_processo: undefined, // Rotinas não têm número de processo
+            observacoes: form.observacoes || undefined,
+            datas_intermediarias: datasValidas.length > 0 ? datasValidas : undefined,
         });
         setLoading(false);
     };
