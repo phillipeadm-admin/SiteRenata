@@ -53,8 +53,7 @@ export function useRotinas() {
                 observacoes: data.observacoes ?? null,
                 datas_intermediarias: data.datas_intermediarias ?? null,
                 recorrente: data.recorrente ?? false,
-                frequencia: data.frequencia ?? null,
-                dia_execucao: data.dia_execucao ?? null,
+                intervalo_dias: data.intervalo_dias ?? null,
                 proxima_execucao: data.proxima_execucao ?? null,
                 updated_at: new Date().toISOString()
             };

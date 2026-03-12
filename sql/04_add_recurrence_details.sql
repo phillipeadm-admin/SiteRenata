@@ -1,9 +1,11 @@
--- Migration: Add recurrence details to renata_rotinas
+-- Migration: Add recurrence details to renata_rotinas (Simplified)
 ALTER TABLE renata_rotinas 
-ADD COLUMN IF NOT EXISTS frequencia TEXT CHECK (frequencia IN ('diaria', 'semanal', 'mensal', 'anual')),
-ADD COLUMN IF NOT EXISTS dia_execucao INTEGER,
+DROP COLUMN IF EXISTS frequencia,
+DROP COLUMN IF EXISTS dia_execucao;
+
+ALTER TABLE renata_rotinas 
+ADD COLUMN IF NOT EXISTS intervalo_dias INTEGER DEFAULT 30,
 ADD COLUMN IF NOT EXISTS proxima_execucao DATE;
 
-COMMENT ON COLUMN renata_rotinas.frequencia IS 'Frequência da recorrência';
-COMMENT ON COLUMN renata_rotinas.dia_execucao IS 'Dia da execução (0-6 para semana, 1-31 para mês)';
+COMMENT ON COLUMN renata_rotinas.intervalo_dias IS 'Intervalo de recorrência em dias';
 COMMENT ON COLUMN renata_rotinas.proxima_execucao IS 'Data da próxima criação automática';

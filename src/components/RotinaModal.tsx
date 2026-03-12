@@ -24,8 +24,7 @@ export default function RotinaModal({ rotina, onSave, onClose, onDelete }: Props
         data_prazo: rotina?.data_prazo ? rotina.data_prazo.slice(0, 10) : '',
         status_kanban: rotina?.status_kanban ?? (statusAtivos[0]?.nome ?? 'triagem'),
         recorrente: rotina?.recorrente ?? false,
-        frequencia: (rotina?.frequencia ?? 'mensal') as 'diaria' | 'semanal' | 'mensal' | 'anual',
-        dia_execucao: rotina?.dia_execucao ?? 1,
+        intervalo_dias: rotina?.intervalo_dias ?? 30,
         proxima_execucao: rotina?.proxima_execucao ? rotina.proxima_execucao.slice(0, 10) : '',
     });
 
@@ -262,55 +261,18 @@ export default function RotinaModal({ rotina, onSave, onClose, onDelete }: Props
                             </label>
                             
                             {form.recorrente && (
-                                <div className="form-grid-3" style={{ marginTop: '12px', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
+                                <div className="form-grid" style={{ marginTop: '12px', borderTop: '1px solid var(--border)', paddingTop: '16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                                     <div className="form-group">
-                                        <label className="form-label">Frequência</label>
-                                        <select 
-                                            className="form-select"
-                                            value={form.frequencia}
-                                            onChange={(e) => setForm({ ...form, frequencia: e.target.value as any })}
-                                        >
-                                            <option value="diaria">Diária</option>
-                                            <option value="semanal">Semanal</option>
-                                            <option value="mensal">Mensal</option>
-                                            <option value="anual">Anual</option>
-                                        </select>
+                                        <label className="form-label">Recorrer a cada (dias)</label>
+                                        <input 
+                                            type="number"
+                                            className="form-input"
+                                            min={1}
+                                            value={form.intervalo_dias}
+                                            onChange={(e) => setForm({ ...form, intervalo_dias: parseInt(e.target.value) || 1 })}
+                                            placeholder="Ex: 30"
+                                        />
                                     </div>
-
-                                    {form.frequencia === 'semanal' && (
-                                        <div className="form-group">
-                                            <label className="form-label">Dia da Semana</label>
-                                            <select 
-                                                className="form-select"
-                                                value={form.dia_execucao}
-                                                onChange={(e) => setForm({ ...form, dia_execucao: parseInt(e.target.value) })}
-                                            >
-                                                <option value={1}>Segunda-feira</option>
-                                                <option value={2}>Terça-feira</option>
-                                                <option value={3}>Quarta-feira</option>
-                                                <option value={4}>Quinta-feira</option>
-                                                <option value={5}>Sexta-feira</option>
-                                                <option value={6}>Sábado</option>
-                                                <option value={0}>Domingo</option>
-                                            </select>
-                                        </div>
-                                    )}
-
-                                    {(form.frequencia === 'mensal' || form.frequencia === 'anual') && (
-                                        <div className="form-group">
-                                            <label className="form-label">
-                                                {form.frequencia === 'mensal' ? 'Dia do Mês' : 'Dia do Ano (Mês)'}
-                                            </label>
-                                            <input 
-                                                type="number"
-                                                className="form-input"
-                                                min={1}
-                                                max={31}
-                                                value={form.dia_execucao}
-                                                onChange={(e) => setForm({ ...form, dia_execucao: parseInt(e.target.value) || 1 })}
-                                            />
-                                        </div>
-                                    )}
 
                                     <div className="form-group">
                                         <label className="form-label">Próxima Criação</label>
