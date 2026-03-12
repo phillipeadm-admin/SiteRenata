@@ -56,9 +56,15 @@ export function useRotinas() {
                 updated_at: new Date().toISOString()
             };
 
-            await supabase
+            const { error } = await supabase
                 .from('renata_rotinas')
                 .insert([nova]);
+            
+            if (error) {
+                console.error("Erro ao criar rotina:", error);
+                alert("Erro ao criar rotina: " + error.message);
+                return;
+            }
             
             await fetchRotinas();
         },
@@ -67,11 +73,17 @@ export function useRotinas() {
 
     const atualizarRotina = useCallback(
         async (id: string, data: Partial<Processo>) => {
-            await supabase
+            const { error } = await supabase
                 .from('renata_rotinas')
                 .update({ ...data, updated_at: new Date().toISOString() })
                 .eq('id', id);
             
+            if (error) {
+                console.error("Erro ao atualizar rotina:", error);
+                alert("Erro ao atualizar rotina: " + error.message);
+                return;
+            }
+
             await fetchRotinas();
         },
         [fetchRotinas]

@@ -57,9 +57,15 @@ export function useProcessos() {
                 updated_at: new Date().toISOString()
             };
 
-            await supabase
+            const { error } = await supabase
                 .from('renata_processos')
                 .insert([novo]);
+            
+            if (error) {
+                console.error("Erro ao criar processo:", error);
+                alert("Erro ao criar processo: " + error.message);
+                return;
+            }
             
             await fetchProcessos();
         },
@@ -68,10 +74,16 @@ export function useProcessos() {
 
     const atualizarProcesso = useCallback(
         async (id: string, data: Partial<Processo>) => {
-            await supabase
+            const { error } = await supabase
                 .from('renata_processos')
                 .update({ ...data, updated_at: new Date().toISOString() })
                 .eq('id', id);
+
+            if (error) {
+                console.error("Erro ao atualizar processo:", error);
+                alert("Erro ao atualizar processo: " + error.message);
+                return;
+            }
             
             await fetchProcessos();
         },
