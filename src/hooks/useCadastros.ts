@@ -96,12 +96,13 @@ export function useCadastros() {
 
     /* ---- RESPONSÁVEIS ---- */
     const addResponsavel = async (nome: string, cargo: string, tipo: Responsavel['tipo']) => {
-        await supabase.from('renata_responsaveis').insert([{ 
+        const { error } = await supabase.from('renata_responsaveis').insert([{ 
             nome: nome.trim(), 
             cargo: cargo.trim(), 
-            tipo, 
+            tipo: tipo || 'execucao', 
             ativo: true 
         }]);
+        if (error) console.error("Erro ao inserir Responsável:", error);
         await fetchCadastros();
     };
 
@@ -152,10 +153,10 @@ export function useCadastros() {
     };
 
     /* Listas filtradas */
-    const tiposAtivos = cadastros.tiposAssunto.filter((t: any) => t.ativo);
-    const executoresAtivos = cadastros.responsaveis.filter((r: any) => r.ativo);
-    const revisoresAtivos = cadastros.responsaveis.filter((r: any) => false); // DEPRECATED: removendo revisores
-    const statusAtivos = cadastros.statusKanban.filter((s: any) => s.ativo).sort((a: any, b: any) => a.ordem - b.ordem);
+    const tiposAtivos: TipoAssunto[] = cadastros.tiposAssunto.filter(t => t.ativo);
+    const executoresAtivos: Responsavel[] = cadastros.responsaveis.filter(r => r.ativo && (r.tipo === 'execucao' || r.tipo === 'ambos'));
+    const revisoresAtivos: Responsavel[] = cadastros.responsaveis.filter(r => r.ativo && (r.tipo === 'revisao' || r.tipo === 'ambos'));
+    const statusAtivos: StatusKanbanDef[] = cadastros.statusKanban.filter(s => s.ativo).sort((a, b) => a.ordem - b.ordem);
 
     return {
         cadastros,

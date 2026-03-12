@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { useProcessos } from '@/hooks/useProcessos';
 import { useRotinas } from '@/hooks/useRotinas';
 import { useCadastros } from '@/hooks/useCadastros';
 import ProcessoModal from '@/components/ProcessoModal';
-import { Processo, StatusKanban, calcularRisco, RISCO_LABELS } from '@/lib/types';
+import { Processo, StatusKanban, StatusKanbanDef, calcularRisco, RISCO_LABELS } from '@/lib/types';
 import { differenceInDays, format, parseISO } from 'date-fns';
 
 export default function KanbanPage() {
@@ -24,7 +24,7 @@ export default function KanbanPage() {
     const { statusAtivos, loaded: loadedCadastros } = useCadastros();
 
     // Set de IDs de processos para identificar a origem de cada card
-    const processoIds = useMemo(() => new Set(processosAtivos.map(p => p.id)), [processosAtivos]);
+    const processoIds = useMemo(() => new Set(processosAtivos.map((p: Processo) => p.id)), [processosAtivos]);
 
     // Todos os itens juntos
     const todos = useMemo(() => [...processosAtivos, ...rotinas], [processosAtivos, rotinas]);
@@ -38,8 +38,12 @@ export default function KanbanPage() {
     const [dragOverCol, setDragOverCol] = useState<StatusKanban | null>(null);
     const [draggingId, setDraggingId] = useState<string | null>(null);
 
-    const getByStatus = (status: StatusKanban) =>
-        todos.filter(p => p.status_kanban === status);
+    const getByStatus = (status: StatusKanban, isFirstColumn: boolean) =>
+        todos.filter((p: Processo) => {
+            const statusExiste = statusAtivos.some((s: StatusKanbanDef) => s.nome === p.status_kanban);
+            if (!statusExiste && isFirstColumn) return true;
+            return p.status_kanban === status;
+        });
 
     // Mover: despacha para o hook correto (processo ou rotina)
     const moverKanban = (id: string, status: StatusKanban) => {
@@ -110,7 +114,7 @@ export default function KanbanPage() {
         e.preventDefault();
         const id = dragCardId.current;
         if (!id) return;
-        const card = todos.find(p => p.id === id);
+        const card = todos.find((p: Processo) => p.id === id);
         if (card && card.status_kanban !== targetStatus) {
             moverKanban(id, targetStatus);
         }
@@ -146,18 +150,18 @@ export default function KanbanPage() {
 
             <div className="page-body">
                 <div className="kanban-board">
-                    {statusAtivos.map(statusObj => {
+                    {statusAtivos.map((statusObj: StatusKanbanDef, idx: number) => {
                         const status = statusObj.nome;
-                        const cards = getByStatus(status);
+                        const cards = getByStatus(status, idx === 0);
                         const isOver = dragOverCol === status;
                         const colColor = statusObj.cor || '#3b82f6';
                         return (
                             <div
                                 key={status}
                                 className={`kanban-column${isOver ? ' kanban-column-over' : ''}`}
-                                onDragOver={e => onDragOver(e, status)}
+                                onDragOver={(e: React.DragEvent) => onDragOver(e, status)}
                                 onDragLeave={onDragLeave}
-                                onDrop={e => onDrop(e, status)}
+                                onDrop={(e: React.DragEvent) => onDrop(e, status)}
                                 style={{
                                     transition: 'background 0.2s, box-shadow 0.2s',
                                     ...(isOver ? {
@@ -195,7 +199,7 @@ export default function KanbanPage() {
                                         </div>
                                     )}
 
-                                    {cards.map(p => {
+                                    {cards.map((p: Processo) => {
                                         const leadTime = differenceInDays(new Date(), parseISO(p.data_entrada));
                                         const risco = calcularRisco(p.data_prazo, p.status_kanban);
                                         const isDragging = draggingId === p.id;
@@ -205,7 +209,7 @@ export default function KanbanPage() {
                                                 key={p.id}
                                                 className="kanban-card"
                                                 draggable
-                                                onDragStart={e => onDragStart(e, p.id)}
+                                                onDragStart={(e: React.DragEvent) => onDragStart(e, p.id)}
                                                 onDragEnd={onDragEnd}
                                                 style={{
                                                     '--card-color': getRiscoColor(p),
@@ -264,9 +268,9 @@ export default function KanbanPage() {
                                                 {/* Botões de mover por clique */}
                                                 <div
                                                     style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid var(--border)', display: 'flex', gap: '4px', flexWrap: 'wrap' }}
-                                                    onClick={e => e.stopPropagation()}
+                                                    onClick={(e: React.MouseEvent) => e.stopPropagation()}
                                                 >
-                                                    {statusAtivos.filter(s => s.nome !== status).map(s => (
+                                                    {statusAtivos.filter((s: StatusKanbanDef) => s.nome !== status).map((s: StatusKanbanDef) => (
                                                         <button
                                                             key={s.nome}
                                                             className="btn btn-secondary btn-sm"

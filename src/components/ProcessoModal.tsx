@@ -26,9 +26,14 @@ export default function ProcessoModal({ processo, onSave, onClose, onDelete }: P
         status_kanban: processo?.status_kanban ?? (statusAtivos[0]?.nome ?? 'Triagem / Backlog'),
     });
 
-    const [responsaveis, setResponsaveis] = useState<string[]>(
+    const [responsaveisExec, setResponsaveisExec] = useState<string[]>(
         processo?.responsavel_execucao 
             ? processo.responsavel_execucao.split(',').map(s => s.trim()).filter(Boolean) 
+            : []
+    );
+    const [responsaveisRev, setResponsaveisRev] = useState<string[]>(
+        processo?.responsavel_revisao
+            ? processo.responsavel_revisao.split(',').map(s => s.trim()).filter(Boolean) 
             : []
     );
 
@@ -45,21 +50,21 @@ export default function ProcessoModal({ processo, onSave, onClose, onDelete }: P
     };
 
     const updateDataInter = (idx: number, field: keyof DataIntermediaria, value: string) => {
-        setDatasInter(datasInter.map((d, i) => i === idx ? { ...d, [field]: value } : d));
+        setDatasInter(datasInter.map((d: DataIntermediaria, i: number) => i === idx ? { ...d, [field]: value } : d));
     };
 
     const removeDataInter = (idx: number) => {
-        setDatasInter(datasInter.filter((_, i) => i !== idx));
+        setDatasInter(datasInter.filter((_: DataIntermediaria, i: number) => i !== idx));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        const datasValidas = datasInter.filter(d => d.data.trim() !== '');
+        const datasValidas = datasInter.filter((d: DataIntermediaria) => d.data.trim() !== '');
         await onSave({
             ...form,
-            responsavel_execucao: responsaveis.join(', '),
-            responsavel_revisao: null,
+            responsavel_execucao: responsaveisExec.join(', '),
+            responsavel_revisao: responsaveisRev.join(', ') || null,
             data_prazo: form.data_prazo || null,
             numero_processo: form.numero_processo || null,
             observacoes: form.observacoes || null,
@@ -91,7 +96,7 @@ export default function ProcessoModal({ processo, onSave, onClose, onDelete }: P
                                     required
                                 >
                                     <option value="">— Selecione o Tipo —</option>
-                                    {tiposAtivos.map((t) => (
+                                    {tiposAtivos.map((t: any) => (
                                         <option key={t.id} value={t.nome}>{t.nome}</option>
                                     ))}
                                 </select>
@@ -125,31 +130,67 @@ export default function ProcessoModal({ processo, onSave, onClose, onDelete }: P
                         </div>
 
                         {/* Responsáveis */}
-                        {/* Responsáveis */}
+                        {/* Responsáveis Execução */}
                         <div className="form-group">
-                            <label className="form-label">Responsáveis</label>
-                            <div style={{
-                                display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '8px',
-                                padding: '12px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border)',
-                                maxHeight: '160px', overflowY: 'auto'
-                            }}>
-                                {executoresAtivos.length === 0 ? (
-                                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Nenhum responsável cadastrado.</span>
-                                ) : (
-                                    executoresAtivos.map(r => (
-                                        <label key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', cursor: 'pointer' }}>
-                                            <input
-                                                type="checkbox"
-                                                checked={responsaveis.includes(r.nome)}
-                                                onChange={(e) => {
-                                                    if (e.target.checked) setResponsaveis([...responsaveis, r.nome]);
-                                                    else setResponsaveis(responsaveis.filter(n => n !== r.nome));
-                                                }}
-                                            />
-                                            {r.nome}{r.cargo ? ` (${r.cargo})` : ''}
-                                        </label>
-                                    ))
-                                )}
+                            <label className="form-label">Responsáveis Execução</label>
+                            <select
+                                className="form-input"
+                                value=""
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val && !responsaveisExec.includes(val)) {
+                                        setResponsaveisExec([...responsaveisExec, val]);
+                                    }
+                                }}
+                            >
+                                <option value="">— Selecionar para adicionar —</option>
+                                {executoresAtivos.map((r: any) => (
+                                    <option key={r.id} value={r.nome}>{r.nome}{r.cargo ? ` (${r.cargo})` : ''}</option>
+                                ))}
+                            </select>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
+                                {responsaveisExec.map(nome => (
+                                    <span key={nome} style={{
+                                        background: 'var(--bg-secondary)', border: '1px solid var(--border)', fontSize: '12px',
+                                        padding: '2px 8px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '4px'
+                                    }}>
+                                        {nome}
+                                        <button type="button" onClick={() => setResponsaveisExec(responsaveisExec.filter(n => n !== nome))}
+                                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>&times;</button>
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Responsáveis Revisão */}
+                        <div className="form-group">
+                            <label className="form-label">Responsáveis Revisão</label>
+                            <select
+                                className="form-input"
+                                value=""
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val && !responsaveisRev.includes(val)) {
+                                        setResponsaveisRev([...responsaveisRev, val]);
+                                    }
+                                }}
+                            >
+                                <option value="">— Selecionar para adicionar —</option>
+                                {revisoresAtivos.map((r: any) => (
+                                    <option key={r.id} value={r.nome}>{r.nome}{r.cargo ? ` (${r.cargo})` : ''}</option>
+                                ))}
+                            </select>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
+                                {responsaveisRev.map(nome => (
+                                    <span key={nome} style={{
+                                        background: 'var(--bg-secondary)', border: '1px solid var(--border)', fontSize: '12px',
+                                        padding: '2px 8px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '4px'
+                                    }}>
+                                        {nome}
+                                        <button type="button" onClick={() => setResponsaveisRev(responsaveisRev.filter(n => n !== nome))}
+                                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>&times;</button>
+                                    </span>
+                                ))}
                             </div>
                         </div>
 
@@ -175,7 +216,7 @@ export default function ProcessoModal({ processo, onSave, onClose, onDelete }: P
                                 />
                             </div>
                             <div className="form-group">
-                                <label className="form-label">Status *</label>
+                                <label className="form-label">Kanban *</label>
                                 <select
                                     className="form-select"
                                     value={form.status_kanban}
@@ -183,7 +224,7 @@ export default function ProcessoModal({ processo, onSave, onClose, onDelete }: P
                                     required
                                 >
                                     {statusAtivos.length === 0 && <option value="Triagem / Backlog">Triagem / Backlog</option>}
-                                    {statusAtivos.map(s => (
+                                    {statusAtivos.map((s: any) => (
                                         <option key={s.id} value={s.nome}>{s.nome}</option>
                                     ))}
                                 </select>
@@ -222,7 +263,7 @@ export default function ProcessoModal({ processo, onSave, onClose, onDelete }: P
                                 </div>
                             )}
 
-                            {datasInter.map((d, idx) => (
+                            {datasInter.map((d: any, idx: number) => (
                                 <div
                                     key={idx}
                                     style={{
@@ -243,7 +284,7 @@ export default function ProcessoModal({ processo, onSave, onClose, onDelete }: P
                                             className="form-input"
                                             type="date"
                                             value={d.data}
-                                            onChange={e => updateDataInter(idx, 'data', e.target.value)}
+                                            onChange={(e: any) => updateDataInter(idx, 'data', e.target.value)}
                                             style={{ fontSize: '12px', padding: '6px 8px' }}
                                         />
                                     </div>
@@ -253,7 +294,7 @@ export default function ProcessoModal({ processo, onSave, onClose, onDelete }: P
                                             className="form-input"
                                             placeholder="Ex: Devolvido para ajuste, Aprovação recebida..."
                                             value={d.justificativa}
-                                            onChange={e => updateDataInter(idx, 'justificativa', e.target.value)}
+                                            onChange={(e: any) => updateDataInter(idx, 'justificativa', e.target.value)}
                                             style={{ fontSize: '12px', padding: '6px 8px' }}
                                         />
                                     </div>

@@ -21,9 +21,9 @@ export default function CadastrosPage() {
     const [editTipoNome, setEditTipoNome] = useState('');
     const [deleteTipoId, setDeleteTipoId] = useState<string | null>(null);
 
-    const [novoResp, setNovoResp] = useState({ nome: '', cargo: '', tipo: 'ambos' as Responsavel['tipo'] });
+    const [novoResp, setNovoResp] = useState({ nome: '', cargo: '', tipo: 'execucao' as Responsavel['tipo'] });
     const [editRespId, setEditRespId] = useState<string | null>(null);
-    const [editResp, setEditResp] = useState({ nome: '', cargo: '', tipo: 'ambos' as Responsavel['tipo'] });
+    const [editResp, setEditResp] = useState({ nome: '', cargo: '', tipo: 'execucao' as Responsavel['tipo'] });
     const [deleteRespId, setDeleteRespId] = useState<string | null>(null);
 
     const [novoStatus, setNovoStatus] = useState({ nome: '', cor: '#6366f1', ordem: 1 });
@@ -49,7 +49,7 @@ export default function CadastrosPage() {
                     {([
                         { key: 'tipos', label: '📂 Tipos de Assunto' },
                         { key: 'responsaveis', label: '👤 Responsáveis' },
-                        { key: 'status', label: '📊 Status do Kanban' },
+                        { key: 'status', label: '📊 Kanban' },
                     ] as { key: Aba; label: string }[]).map(tab => (
                         <button
                             key={tab.key}
@@ -234,7 +234,7 @@ export default function CadastrosPage() {
                                 disabled={!novoResp.nome.trim()}
                                 onClick={() => {
                                     addResponsavel(novoResp.nome, novoResp.cargo, 'ambos');
-                                    setNovoResp({ nome: '', cargo: '', tipo: 'ambos' });
+                                    setNovoResp({ ...novoResp, nome: '', cargo: '', tipo: 'ambos' });
                                 }}
                             >
                                 ✅ Adicionar
@@ -353,7 +353,7 @@ export default function CadastrosPage() {
                 {aba === 'status' && (
                     <div className="card">
                         <div className="card-header">
-                            <h2 className="card-title">📊 Status do Kanban</h2>
+                            <h2 className="card-title">📊 Kanban</h2>
                             <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                                 {statusOrdenados.length} status (colunas)
                             </span>
@@ -397,8 +397,8 @@ export default function CadastrosPage() {
                             <button
                                 className="btn btn-primary"
                                 disabled={!novoStatus.nome.trim()}
-                                onClick={() => {
-                                    addStatus(novoStatus.nome, novoStatus.cor, novoStatus.ordem);
+                                onClick={async () => {
+                                    await addStatus(novoStatus.nome, novoStatus.cor, novoStatus.ordem);
                                     setNovoStatus({ nome: '', cor: '#6366f1', ordem: statusOrdenados.length + 2 });
                                 }}
                             >
