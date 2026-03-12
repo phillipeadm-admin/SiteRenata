@@ -12,7 +12,7 @@ interface Props {
 }
 
 export default function ProcessoModal({ processo, onSave, onClose, onDelete }: Props) {
-    const { tiposAtivos, executoresAtivos, statusAtivos } = useCadastros();
+    const { tiposAtivos, executoresAtivos, revisoresAtivos, statusAtivos } = useCadastros();
 
     const [form, setForm] = useState({
         assunto: processo?.assunto ?? '',

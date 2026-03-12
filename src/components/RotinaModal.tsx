@@ -12,7 +12,7 @@ interface Props {
 }
 
 export default function RotinaModal({ rotina, onSave, onClose, onDelete }: Props) {
-    const { tiposAtivos, executoresAtivos, statusAtivos } = useCadastros();
+    const { tiposAtivos, executoresAtivos, revisoresAtivos, statusAtivos } = useCadastros();
 
     const [form, setForm] = useState({
         assunto: rotina?.assunto ?? '',
