@@ -83,9 +83,9 @@ export default function CadastrosPage() {
                                     placeholder="Ex: Adicional Noturno"
                                     value={novoTipo}
                                     onChange={e => setNovoTipo(e.target.value)}
-                                    onKeyDown={e => {
+                                    onKeyDown={async (e) => {
                                         if (e.key === 'Enter' && novoTipo.trim()) {
-                                            addTipo(novoTipo);
+                                            await addTipo(novoTipo);
                                             setNovoTipo('');
                                         }
                                     }}
@@ -95,7 +95,7 @@ export default function CadastrosPage() {
                                 <button
                                     className="btn btn-primary"
                                     disabled={!novoTipo.trim()}
-                                    onClick={() => { addTipo(novoTipo); setNovoTipo(''); }}
+                                    onClick={async () => { await addTipo(novoTipo); setNovoTipo(''); }}
                                 >
                                     ✅ Adicionar
                                 </button>
@@ -232,8 +232,8 @@ export default function CadastrosPage() {
                             <button
                                 className="btn btn-primary"
                                 disabled={!novoResp.nome.trim()}
-                                onClick={() => {
-                                    addResponsavel(novoResp.nome, novoResp.cargo, 'ambos');
+                                onClick={async () => {
+                                    await addResponsavel(novoResp.nome, novoResp.cargo, 'ambos');
                                     setNovoResp({ ...novoResp, nome: '', cargo: '', tipo: 'ambos' });
                                 }}
                             >

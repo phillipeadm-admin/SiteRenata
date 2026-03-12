@@ -30,18 +30,24 @@ export function useCadastros() {
     const [loaded, setLoaded] = useState(false);
 
     const fetchCadastros = useCallback(async () => {
-        const [tiposRes, respsRes, statusRes] = await Promise.all([
-            supabase.from('renata_tipos_assunto').select('*').order('nome'),
-            supabase.from('renata_responsaveis').select('*').order('nome'),
-            supabase.from('renata_status_kanban').select('*').order('ordem')
-        ]);
+        try {
+            const [tiposRes, respsRes, statusRes] = await Promise.all([
+                supabase.from('renata_tipos_assunto').select('*').order('nome'),
+                supabase.from('renata_responsaveis').select('*').order('nome'),
+                supabase.from('renata_status_kanban').select('*').order('ordem')
+            ]);
 
-        if (!tiposRes.error && !respsRes.error && !statusRes.error) {
+            if (tiposRes.error) console.error("Erro ao buscar tipos:", tiposRes.error);
+            if (respsRes.error) console.error("Erro ao buscar responsáveis:", respsRes.error);
+            if (statusRes.error) console.error("Erro ao buscar status:", statusRes.error);
+
             setCadastros({
-                tiposAssunto: tiposRes.data as TipoAssunto[],
-                responsaveis: respsRes.data as Responsavel[],
-                statusKanban: statusRes.data as StatusKanbanDef[]
+                tiposAssunto: (tiposRes.data || []) as TipoAssunto[],
+                responsaveis: (respsRes.data || []) as Responsavel[],
+                statusKanban: (statusRes.data || []) as StatusKanbanDef[]
             });
+        } catch (err) {
+            console.error("Erro fatal ao carregar cadastros:", err);
         }
     }, []);
 
@@ -72,7 +78,11 @@ export function useCadastros() {
 
     /* ---- TIPOS DE ASSUNTO ---- */
     const addTipo = async (nome: string) => {
-        await supabase.from('renata_tipos_assunto').insert([{ nome: nome.trim(), ativo: true }]);
+        const { error } = await supabase.from('renata_tipos_assunto').insert([{ nome: nome.trim(), ativo: true }]);
+        if (error) {
+            console.error("Erro ao inserir Tipo:", error);
+            alert("Erro ao salvar tipo: " + error.message);
+        }
         await fetchCadastros();
     };
 
@@ -96,13 +106,19 @@ export function useCadastros() {
 
     /* ---- RESPONSÁVEIS ---- */
     const addResponsavel = async (nome: string, cargo: string, tipo: Responsavel['tipo']) => {
+        console.log("Tentando adicionar responsável:", { nome, cargo, tipo });
         const { error } = await supabase.from('renata_responsaveis').insert([{ 
             nome: nome.trim(), 
             cargo: cargo.trim(), 
             tipo: tipo || 'execucao', 
             ativo: true 
         }]);
-        if (error) console.error("Erro ao inserir Responsável:", error);
+        if (error) {
+            console.error("Erro ao inserir Responsável:", error);
+            alert("Erro ao salvar responsável: " + error.message);
+        } else {
+            console.log("Responsável inserido com sucesso!");
+        }
         await fetchCadastros();
     };
 
@@ -130,12 +146,23 @@ export function useCadastros() {
 
     /* ---- STATUS KANBAN ---- */
     const addStatus = async (nome: string, cor: string, ordem: number) => {
-        await supabase.from('renata_status_kanban').insert([{ nome: nome.trim(), cor: cor.trim(), ordem, ativo: true }]);
+        console.log("Tentando adicionar status:", { nome, cor, ordem });
+        const { error } = await supabase.from('renata_status_kanban').insert([{ nome: nome.trim(), cor: cor.trim(), ordem, ativo: true }]);
+        if (error) {
+            console.error("Erro ao inserir Status:", error);
+            alert("Erro ao salvar status: " + error.message);
+        } else {
+            console.log("Status inserido com sucesso!");
+        }
         await fetchCadastros();
     };
 
     const updateStatus = async (id: string, nome: string, cor: string, ordem: number) => {
-        await supabase.from('renata_status_kanban').update({ nome: nome.trim(), cor: cor.trim(), ordem }).eq('id', id);
+        const { error } = await supabase.from('renata_status_kanban').update({ nome: nome.trim(), cor: cor.trim(), ordem }).eq('id', id);
+        if (error) {
+            console.error("Erro ao atualizar Status:", error);
+            alert("Erro ao atualizar status: " + error.message);
+        }
         await fetchCadastros();
     };
 
