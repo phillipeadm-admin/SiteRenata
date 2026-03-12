@@ -140,12 +140,6 @@ export default function KanbanPage() {
                         </span>
                     </p>
                 </div>
-                <button
-                    className="btn btn-primary"
-                    onClick={() => { setSelectedProcesso(null); setModalOpen(true); }}
-                >
-                    ➕ Novo Processo
-                </button>
             </div>
 
             <div className="page-body">
