@@ -16,9 +16,9 @@ export default function CadastrosPage() {
     const [aba, setAba] = useState<Aba>('tipos');
 
     /* ---- Estados de edição e confirmação de exclusão ---- */
-    const [novoTipo, setNovoTipo] = useState('');
+    const [novoTipo, setNovoTipo] = useState({ nome: '', responsavel_execucao: '', responsavel_revisao: '' });
     const [editTipoId, setEditTipoId] = useState<string | null>(null);
-    const [editTipoNome, setEditTipoNome] = useState('');
+    const [editTipo, setEditTipo] = useState({ nome: '', responsavel_execucao: '', responsavel_revisao: '' });
     const [deleteTipoId, setDeleteTipoId] = useState<string | null>(null);
 
     const [novoResp, setNovoResp] = useState({ nome: '', cargo: '', tipo: 'execucao' as Responsavel['tipo'] });
@@ -47,7 +47,7 @@ export default function CadastrosPage() {
                 {/* Abas */}
                 <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
                     {([
-                        { key: 'tipos', label: '📂 Tipos de Assunto' },
+                        { key: 'tipos', label: '📂 Processo e Rotina' },
                         { key: 'responsaveis', label: '👤 Responsáveis' },
                         { key: 'status', label: '📊 Kanban' },
                     ] as { key: Aba; label: string }[]).map(tab => (
@@ -65,49 +65,97 @@ export default function CadastrosPage() {
                 {aba === 'tipos' && (
                     <div className="card">
                         <div className="card-header">
-                            <h2 className="card-title">📂 Tipos de Assunto</h2>
+                            <h2 className="card-title">📂 Definição de Processo e Rotina</h2>
                             <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                                 {cadastros.tiposAssunto.length} registros
                             </span>
                         </div>
 
                         <div style={{
-                            display: 'flex', gap: '10px', marginBottom: '20px',
-                            padding: '16px', background: 'var(--bg-secondary)',
-                            borderRadius: '12px', border: '1px solid var(--border)'
+                            display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '10px',
+                            marginBottom: '20px', padding: '16px',
+                            background: 'var(--bg-secondary)', borderRadius: '12px',
+                            border: '1px solid var(--border)', alignItems: 'flex-end'
                         }}>
-                            <div className="form-group" style={{ flex: 1 }}>
-                                <label className="form-label">Nome do Tipo</label>
+                            <div className="form-group">
+                                <label className="form-label">Nome do Tipo *</label>
                                 <input
                                     className="form-input"
                                     placeholder="Ex: Adicional Noturno"
-                                    value={novoTipo}
-                                    onChange={e => setNovoTipo(e.target.value)}
-                                    onKeyDown={async (e) => {
-                                        if (e.key === 'Enter' && novoTipo.trim()) {
-                                            await addTipo(novoTipo);
-                                            setNovoTipo('');
-                                        }
-                                    }}
+                                    value={novoTipo.nome}
+                                    onChange={e => setNovoTipo({ ...novoTipo, nome: e.target.value })}
                                 />
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-                                <button
-                                    className="btn btn-primary"
-                                    disabled={!novoTipo.trim()}
-                                    onClick={async () => { await addTipo(novoTipo); setNovoTipo(''); }}
+                            <div className="form-group">
+                                <label className="form-label">Executores Padrão</label>
+                                <select
+                                    className="form-select"
+                                    value=""
+                                    onChange={e => {
+                                        const val = e.target.value;
+                                        if (val) {
+                                            const current = novoTipo.responsavel_execucao ? novoTipo.responsavel_execucao.split(',').map(s => s.trim()).filter(Boolean) : [];
+                                            if (!current.includes(val)) {
+                                                setNovoTipo({ ...novoTipo, responsavel_execucao: [...current, val].join(', ') });
+                                            }
+                                        }
+                                    }}
                                 >
-                                    ✅ Adicionar
-                                </button>
+                                    <option value="">— Selecionar —</option>
+                                    {cadastros.responsaveis.filter(r => r.ativo && (r.tipo === 'execucao' || r.tipo === 'ambos')).map(r => (
+                                        <option key={r.id} value={r.nome}>{r.nome}</option>
+                                    ))}
+                                </select>
+                                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                                    {novoTipo.responsavel_execucao || 'Nenhum selecionado'}
+                                    {novoTipo.responsavel_execucao && <button onClick={() => setNovoTipo({...novoTipo, responsavel_execucao: ''})} style={{marginLeft: '5px', color: 'var(--accent-red)', border: 'none', background: 'none', cursor: 'pointer'}}>Limpar</button>}
+                                </div>
                             </div>
+                            <div className="form-group">
+                                <label className="form-label">Revisores Padrão</label>
+                                <select
+                                    className="form-select"
+                                    value=""
+                                    onChange={e => {
+                                        const val = e.target.value;
+                                        if (val) {
+                                            const current = novoTipo.responsavel_revisao ? novoTipo.responsavel_revisao.split(',').map(s => s.trim()).filter(Boolean) : [];
+                                            if (!current.includes(val)) {
+                                                setNovoTipo({ ...novoTipo, responsavel_revisao: [...current, val].join(', ') });
+                                            }
+                                        }
+                                    }}
+                                >
+                                    <option value="">— Selecionar —</option>
+                                    {cadastros.responsaveis.filter(r => r.ativo && (r.tipo === 'revisao' || r.tipo === 'ambos')).map(r => (
+                                        <option key={r.id} value={r.nome}>{r.nome}</option>
+                                    ))}
+                                </select>
+                                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                                    {novoTipo.responsavel_revisao || 'Nenhum selecionado'}
+                                    {novoTipo.responsavel_revisao && <button onClick={() => setNovoTipo({...novoTipo, responsavel_revisao: ''})} style={{marginLeft: '5px', color: 'var(--accent-red)', border: 'none', background: 'none', cursor: 'pointer'}}>Limpar</button>}
+                                </div>
+                            </div>
+                            <button
+                                className="btn btn-primary"
+                                disabled={!novoTipo.nome.trim()}
+                                onClick={async () => { 
+                                    await addTipo(novoTipo.nome, novoTipo.responsavel_execucao, novoTipo.responsavel_revisao); 
+                                    setNovoTipo({ nome: '', responsavel_execucao: '', responsavel_revisao: '' }); 
+                                }}
+                            >
+                                ✅ Adicionar
+                            </button>
                         </div>
 
                         <div className="table-wrapper">
                             <table>
                                 <thead>
                                     <tr>
-                                        <th>Nome</th>
-                                        <th style={{ textAlign: 'right', width: '280px' }}>Ações</th>
+                                        <th>Nome / Tipo</th>
+                                        <th>Executores Padrão</th>
+                                        <th>Revisores Padrão</th>
+                                        <th style={{ textAlign: 'right', width: '220px' }}>Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -127,17 +175,72 @@ export default function CadastrosPage() {
                                                 {editTipoId === t.id ? (
                                                     <input
                                                         className="form-input"
-                                                        style={{ maxWidth: '360px' }}
-                                                        value={editTipoNome}
-                                                        onChange={e => setEditTipoNome(e.target.value)}
-                                                        onKeyDown={e => {
-                                                            if (e.key === 'Enter') { updateTipo(t.id, editTipoNome); setEditTipoId(null); }
-                                                            if (e.key === 'Escape') setEditTipoId(null);
-                                                        }}
+                                                        value={editTipo.nome}
+                                                        onChange={e => setEditTipo({ ...editTipo, nome: e.target.value })}
                                                         autoFocus
                                                     />
                                                 ) : (
-                                                    <span style={{ fontWeight: 500 }}>{t.nome}</span>
+                                                    <span style={{ fontWeight: 600, color: 'var(--accent-purple)' }}>{t.nome}</span>
+                                                )}
+                                            </td>
+                                            <td>
+                                                {editTipoId === t.id ? (
+                                                    <select
+                                                        className="form-select"
+                                                        value=""
+                                                        onChange={e => {
+                                                            const val = e.target.value;
+                                                            if (val) {
+                                                                const current = editTipo.responsavel_execucao ? editTipo.responsavel_execucao.split(',').map(s => s.trim()).filter(Boolean) : [];
+                                                                if (!current.includes(val)) {
+                                                                    setEditTipo({ ...editTipo, responsavel_execucao: [...current, val].join(', ') });
+                                                                }
+                                                            }
+                                                        }}
+                                                    >
+                                                        <option value="">+ Adicionar</option>
+                                                        {cadastros.responsaveis.filter(r => r.ativo && (r.tipo === 'execucao' || r.tipo === 'ambos')).map(r => (
+                                                            <option key={r.id} value={r.nome}>{r.nome}</option>
+                                                        ))}
+                                                    </select>
+                                                ) : (
+                                                    <span style={{ fontSize: '12px' }}>{t.responsavel_execucao || '—'}</span>
+                                                )}
+                                                {editTipoId === t.id && editTipo.responsavel_execucao && (
+                                                    <div style={{ fontSize: '10px', marginTop: '4px' }}>
+                                                        {editTipo.responsavel_execucao}
+                                                        <button onClick={() => setEditTipo({...editTipo, responsavel_execucao: ''})} style={{marginLeft: '5px', color: 'var(--accent-red)', border: 'none', background: 'none', cursor: 'pointer'}}>✕</button>
+                                                    </div>
+                                                )}
+                                            </td>
+                                            <td>
+                                                {editTipoId === t.id ? (
+                                                    <select
+                                                        className="form-select"
+                                                        value=""
+                                                        onChange={e => {
+                                                            const val = e.target.value;
+                                                            if (val) {
+                                                                const current = editTipo.responsavel_revisao ? editTipo.responsavel_revisao.split(',').map(s => s.trim()).filter(Boolean) : [];
+                                                                if (!current.includes(val)) {
+                                                                    setEditTipo({ ...editTipo, responsavel_revisao: [...current, val].join(', ') });
+                                                                }
+                                                            }
+                                                        }}
+                                                    >
+                                                        <option value="">+ Adicionar</option>
+                                                        {cadastros.responsaveis.filter(r => r.ativo && (r.tipo === 'revisao' || r.tipo === 'ambos')).map(r => (
+                                                            <option key={r.id} value={r.nome}>{r.nome}</option>
+                                                        ))}
+                                                    </select>
+                                                ) : (
+                                                    <span style={{ fontSize: '12px' }}>{t.responsavel_revisao || '—'}</span>
+                                                )}
+                                                {editTipoId === t.id && editTipo.responsavel_revisao && (
+                                                    <div style={{ fontSize: '10px', marginTop: '4px' }}>
+                                                        {editTipo.responsavel_revisao}
+                                                        <button onClick={() => setEditTipo({...editTipo, responsavel_revisao: ''})} style={{marginLeft: '5px', color: 'var(--accent-red)', border: 'none', background: 'none', cursor: 'pointer'}}>✕</button>
+                                                    </div>
                                                 )}
                                             </td>
                                             <td>
@@ -162,7 +265,10 @@ export default function CadastrosPage() {
                                                         </>
                                                     ) : editTipoId === t.id ? (
                                                         <>
-                                                            <button className="btn btn-primary btn-sm" onClick={() => { updateTipo(t.id, editTipoNome); setEditTipoId(null); }}>
+                                                            <button className="btn btn-primary btn-sm" onClick={() => { 
+                                                                updateTipo(t.id, editTipo.nome, editTipo.responsavel_execucao, editTipo.responsavel_revisao); 
+                                                                setEditTipoId(null); 
+                                                            }}>
                                                                 💾 Salvar
                                                             </button>
                                                             <button className="btn btn-secondary btn-sm" onClick={() => setEditTipoId(null)}>
@@ -173,7 +279,15 @@ export default function CadastrosPage() {
                                                         <>
                                                             <button
                                                                 className="btn btn-secondary btn-sm"
-                                                                onClick={() => { setEditTipoId(t.id); setEditTipoNome(t.nome); setDeleteTipoId(null); }}
+                                                                onClick={() => { 
+                                                                    setEditTipoId(t.id); 
+                                                                    setEditTipo({ 
+                                                                        nome: t.nome, 
+                                                                        responsavel_execucao: t.responsavel_execucao || '', 
+                                                                        responsavel_revisao: t.responsavel_revisao || '' 
+                                                                    }); 
+                                                                    setDeleteTipoId(null); 
+                                                                }}
                                                             >
                                                                 ✏️ Editar
                                                             </button>

@@ -90,7 +90,25 @@ export default function RotinaModal({ rotina, onSave, onClose, onDelete }: Props
                             <select
                                 className="form-select"
                                 value={form.tipo_assunto}
-                                onChange={(e) => setForm({ ...form, tipo_assunto: e.target.value })}
+                                onChange={(e) => {
+                                    const selectedNome = e.target.value;
+                                    setForm({ ...form, tipo_assunto: selectedNome });
+                                    
+                                    // Auto-preenchimento de responsáveis se estiverem vazios
+                                    if (!rotina) { // Apenas para novas rotinas
+                                        const tipo = tiposAtivos.find(t => t.nome === selectedNome);
+                                        if (tipo) {
+                                            if (responsaveisExec.length === 0 && tipo.responsavel_execucao) {
+                                                const execs = tipo.responsavel_execucao.split(',').map(s => s.trim()).filter(Boolean);
+                                                setResponsaveisExec(execs);
+                                            }
+                                            if (responsaveisRev.length === 0 && tipo.responsavel_revisao) {
+                                                const revs = tipo.responsavel_revisao.split(',').map(s => s.trim()).filter(Boolean);
+                                                setResponsaveisRev(revs);
+                                            }
+                                        }
+                                    }
+                                }}
                                 required
                             >
                                 <option value="">— Selecione o Tipo —</option>

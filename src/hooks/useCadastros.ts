@@ -8,6 +8,8 @@ import { StatusKanbanDef } from '@/lib/types';
 export interface TipoAssunto {
     id: string;
     nome: string;
+    responsavel_execucao?: string;
+    responsavel_revisao?: string;
     ativo: boolean;
 }
 
@@ -77,8 +79,13 @@ export function useCadastros() {
     }, [fetchCadastros]);
 
     /* ---- TIPOS DE ASSUNTO ---- */
-    const addTipo = async (nome: string) => {
-        const { error } = await supabase.from('renata_tipos_assunto').insert([{ nome: nome.trim(), ativo: true }]);
+    const addTipo = async (nome: string, responsavel_execucao?: string, responsavel_revisao?: string) => {
+        const { error } = await supabase.from('renata_tipos_assunto').insert([{ 
+            nome: nome.trim(), 
+            responsavel_execucao: responsavel_execucao?.trim() || null,
+            responsavel_revisao: responsavel_revisao?.trim() || null,
+            ativo: true 
+        }]);
         if (error) {
             console.error("Erro ao inserir Tipo:", error);
             alert("Erro ao salvar tipo: " + error.message);
@@ -86,8 +93,12 @@ export function useCadastros() {
         await fetchCadastros();
     };
 
-    const updateTipo = async (id: string, nome: string) => {
-        await supabase.from('renata_tipos_assunto').update({ nome: nome.trim() }).eq('id', id);
+    const updateTipo = async (id: string, nome: string, responsavel_execucao?: string, responsavel_revisao?: string) => {
+        await supabase.from('renata_tipos_assunto').update({ 
+            nome: nome.trim(),
+            responsavel_execucao: responsavel_execucao?.trim() || null,
+            responsavel_revisao: responsavel_revisao?.trim() || null
+        }).eq('id', id);
         await fetchCadastros();
     };
 

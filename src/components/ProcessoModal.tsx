@@ -89,17 +89,35 @@ export default function ProcessoModal({ processo, onSave, onClose, onDelete }: P
                         <div className="form-grid">
                             <div className="form-group">
                                 <label className="form-label">Tipo de Assunto *</label>
-                                <select
-                                    className="form-select"
-                                    value={form.tipo_assunto}
-                                    onChange={(e) => setForm({ ...form, tipo_assunto: e.target.value })}
-                                    required
-                                >
-                                    <option value="">— Selecione o Tipo —</option>
-                                    {tiposAtivos.map((t: any) => (
-                                        <option key={t.id} value={t.nome}>{t.nome}</option>
-                                    ))}
-                                </select>
+                                    <select
+                                        className="form-select"
+                                        value={form.tipo_assunto}
+                                        onChange={(e) => {
+                                            const selectedNome = e.target.value;
+                                            setForm({ ...form, tipo_assunto: selectedNome });
+                                            
+                                            // Auto-preenchimento de responsáveis se estiverem vazios
+                                            if (!processo) { // Apenas para novos processos
+                                                const tipo = tiposAtivos.find(t => t.nome === selectedNome);
+                                                if (tipo) {
+                                                    if (responsaveisExec.length === 0 && tipo.responsavel_execucao) {
+                                                        const execs = tipo.responsavel_execucao.split(',').map(s => s.trim()).filter(Boolean);
+                                                        setResponsaveisExec(execs);
+                                                    }
+                                                    if (responsaveisRev.length === 0 && tipo.responsavel_revisao) {
+                                                        const revs = tipo.responsavel_revisao.split(',').map(s => s.trim()).filter(Boolean);
+                                                        setResponsaveisRev(revs);
+                                                    }
+                                                }
+                                            }
+                                        }}
+                                        required
+                                    >
+                                        <option value="">— Selecione o Tipo —</option>
+                                        {tiposAtivos.map((t: any) => (
+                                            <option key={t.id} value={t.nome}>{t.nome}</option>
+                                        ))}
+                                    </select>
                                 {tiposAtivos.length === 0 && (
                                     <span style={{ fontSize: '11px', color: 'var(--accent-yellow)' }}>
                                         ⚠️ Nenhum tipo cadastrado. Acesse <strong>➕ Incluir</strong>.
