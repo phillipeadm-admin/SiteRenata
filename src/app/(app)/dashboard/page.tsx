@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { useProcessos } from '@/hooks/useProcessos';
 import { useRotinas } from '@/hooks/useRotinas';
-import { calcularRisco, RISCO_LABELS, RISCO_COLORS, STATUS_KANBAN_LABELS, STATUS_KANBAN_COLORS } from '@/lib/types';
+import { calcularRisco, RISCO_LABELS, RISCO_COLORS } from '@/lib/types';
 import { differenceInDays, format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
@@ -14,6 +14,7 @@ import {
 export default function DashboardPage() {
     const { processosAtivos, loading: loadingP } = useProcessos();
     const { rotinas, loading: loadingR } = useRotinas();
+    const { statusAtivos } = useCadastros();
 
     // Consolida processos + rotinas em um único array para o dashboard
     const todos = useMemo(() => [...processosAtivos, ...rotinas], [processosAtivos, rotinas]);
@@ -41,12 +42,12 @@ export default function DashboardPage() {
         todos.forEach(p => {
             map[p.status_kanban] = (map[p.status_kanban] || 0) + 1;
         });
-        return Object.entries(STATUS_KANBAN_LABELS).map(([key, label]) => ({
-            name: label,
-            value: map[key] || 0,
-            color: STATUS_KANBAN_COLORS[key as keyof typeof STATUS_KANBAN_COLORS],
+        return statusAtivos.map(s => ({
+            name: s.nome,
+            value: map[s.nome] || 0,
+            color: s.cor || '#6366f1',
         }));
-    }, [todos]);
+    }, [todos, statusAtivos]);
 
     const tipoData = useMemo(() => {
         const map: Record<string, number> = {};
@@ -261,9 +262,21 @@ export default function DashboardPage() {
                                                 {format(parseISO(p.data_entrada), 'dd/MM/yyyy')}
                                             </td>
                                             <td>
-                                                <span className={`badge badge-${p.status_kanban}`}>
-                                                    {STATUS_KANBAN_LABELS[p.status_kanban]}
-                                                </span>
+                                                {(() => {
+                                                    const cor = statusAtivos.find(s => s.nome === p.status_kanban)?.cor || '#6366f1';
+                                                    return (
+                                                        <span 
+                                                            className="badge" 
+                                                            style={{ 
+                                                                backgroundColor: `${cor}15`,
+                                                                color: cor,
+                                                                border: `1px solid ${cor}30`
+                                                            }}
+                                                        >
+                                                            {p.status_kanban}
+                                                        </span>
+                                                    );
+                                                })()}
                                             </td>
                                             <td>
                                                 <span className={`badge badge-risco-${risco}`}>

@@ -3,14 +3,16 @@
 import { useState, useMemo } from 'react';
 import { useRotinas } from '@/hooks/useRotinas';
 import RotinaModal from '@/components/RotinaModal';
+import { useCadastros } from '@/hooks/useCadastros';
 import {
-    Processo, STATUS_KANBAN_LABELS, STATUS_KANBAN_COLORS,
+    Processo,
     calcularRisco, RISCO_LABELS
 } from '@/lib/types';
 import { differenceInDays, format, parseISO } from 'date-fns';
 
 export default function RotinasPage() {
     const { rotinas, loading, criarRotina, atualizarRotina, excluirRotina } = useRotinas();
+    const { statusAtivos } = useCadastros();
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedRotina, setSelectedRotina] = useState<Processo | null>(null);
     const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -84,8 +86,8 @@ export default function RotinasPage() {
                             <label className="form-label">Status</label>
                             <select className="form-select" value={filtroStatus} onChange={e => setFiltroStatus(e.target.value)}>
                                 <option value="">Todos</option>
-                                {Object.entries(STATUS_KANBAN_LABELS).map(([k, v]) => (
-                                    <option key={k} value={k}>{v}</option>
+                                {statusAtivos.map(s => (
+                                    <option key={s.nome} value={s.nome}>{s.nome}</option>
                                 ))}
                             </select>
                         </div>
@@ -152,8 +154,8 @@ export default function RotinasPage() {
                                         <tr key={r.id}>
                                             <td>
                                                 <span style={{
-                                                    background: STATUS_KANBAN_COLORS[r.status_kanban] + '25',
-                                                    color: STATUS_KANBAN_COLORS[r.status_kanban],
+                                                    background: (statusAtivos.find(s => s.nome === r.status_kanban)?.cor || '#6366f1') + '25',
+                                                    color: statusAtivos.find(s => s.nome === r.status_kanban)?.cor || '#6366f1',
                                                     padding: '3px 8px',
                                                     borderRadius: '6px',
                                                     fontSize: '11px',
@@ -201,9 +203,22 @@ export default function RotinasPage() {
                                                 </span>
                                             </td>
                                             <td>
-                                                <span className={`badge badge-${r.status_kanban}`} style={{ fontSize: '10px' }}>
-                                                    {STATUS_KANBAN_LABELS[r.status_kanban]}
-                                                </span>
+                                                {(() => {
+                                                    const cor = statusAtivos.find(s => s.nome === r.status_kanban)?.cor || '#6366f1';
+                                                    return (
+                                                        <span 
+                                                            className="badge" 
+                                                            style={{ 
+                                                                fontSize: '10px',
+                                                                backgroundColor: `${cor}15`,
+                                                                color: cor,
+                                                                border: `1px solid ${cor}30`
+                                                            }}
+                                                        >
+                                                            {r.status_kanban}
+                                                        </span>
+                                                    );
+                                                })()}
                                             </td>
                                             <td>
                                                 <span className={`badge badge-risco-${risco}`} style={{ fontSize: '10px' }}>

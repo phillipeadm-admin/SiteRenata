@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { useProcessos } from '@/hooks/useProcessos';
 import ProcessoModal from '@/components/ProcessoModal';
 import {
-    Processo, STATUS_KANBAN_LABELS, STATUS_KANBAN_COLORS,
+    Processo,
     calcularRisco, RISCO_LABELS
 } from '@/lib/types';
 import { useCadastros } from '@/hooks/useCadastros';
@@ -97,8 +97,8 @@ export default function ProcessosPage() {
                             <label className="form-label">Status</label>
                             <select className="form-select" value={filtroStatus} onChange={e => setFiltroStatus(e.target.value)}>
                                 <option value="">Todos</option>
-                                {Object.entries(STATUS_KANBAN_LABELS).map(([k, v]) => (
-                                    <option key={k} value={k}>{v}</option>
+                                {statusAtivos.map(s => (
+                                    <option key={s.nome} value={s.nome}>{s.nome}</option>
                                 ))}
                             </select>
                         </div>
@@ -169,8 +169,8 @@ export default function ProcessosPage() {
                                             <td>
                                                 <div style={{ fontWeight: 600, fontSize: '12px' }}>
                                                     <span style={{
-                                                        background: STATUS_KANBAN_COLORS[p.status_kanban] + '25',
-                                                        color: STATUS_KANBAN_COLORS[p.status_kanban],
+                                                        background: (statusAtivos.find(s => s.nome === p.status_kanban)?.cor || '#6366f1') + '25',
+                                                        color: statusAtivos.find(s => s.nome === p.status_kanban)?.cor || '#6366f1',
                                                         padding: '2px 6px',
                                                         borderRadius: '4px',
                                                         fontSize: '10px',
@@ -223,9 +223,22 @@ export default function ProcessosPage() {
                                                 </span>
                                             </td>
                                             <td>
-                                                <span className={`badge badge-${p.status_kanban}`} style={{ fontSize: '10px' }}>
-                                                    {STATUS_KANBAN_LABELS[p.status_kanban]}
-                                                </span>
+                                                {(() => {
+                                                    const cor = statusAtivos.find(s => s.nome === p.status_kanban)?.cor || '#6366f1';
+                                                    return (
+                                                        <span 
+                                                            className="badge" 
+                                                            style={{ 
+                                                                fontSize: '10px',
+                                                                backgroundColor: `${cor}15`,
+                                                                color: cor,
+                                                                border: `1px solid ${cor}30`
+                                                            }}
+                                                        >
+                                                            {p.status_kanban}
+                                                        </span>
+                                                    );
+                                                })()}
                                             </td>
                                             <td>
                                                 <span className={`badge badge-risco-${risco}`} style={{ fontSize: '10px' }}>

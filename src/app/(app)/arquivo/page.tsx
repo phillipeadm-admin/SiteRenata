@@ -2,12 +2,13 @@
 
 import { useState } from 'react';
 import { useProcessos } from '@/hooks/useProcessos';
-import { STATUS_KANBAN_COLORS, STATUS_KANBAN_LABELS } from '@/lib/types';
+import { useCadastros } from '@/hooks/useCadastros';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export default function ArquivoPage() {
     const { processosArquivados, loading } = useProcessos();
+    const { statusAtivos } = useCadastros();
     const [filtro, setFiltro] = useState('');
 
     const filtrados = processosArquivados.filter(p => 
@@ -74,16 +75,22 @@ export default function ArquivoPage() {
                                         {p.data_finalizacao ? format(new Date(p.data_finalizacao), "dd 'de' MMMM, yyyy", { locale: ptBR }) : '—'}
                                     </td>
                                     <td>
-                                        <span 
-                                            className="badge" 
-                                            style={{ 
-                                                backgroundColor: `${STATUS_KANBAN_COLORS[p.status_kanban]}15`,
-                                                color: STATUS_KANBAN_COLORS[p.status_kanban],
-                                                border: `1px solid ${STATUS_KANBAN_COLORS[p.status_kanban]}30`
-                                            }}
-                                        >
-                                            {STATUS_KANBAN_LABELS[p.status_kanban]}
-                                        </span>
+                                        {(() => {
+                                            const sec = statusAtivos.find(s => s.nome === p.status_kanban);
+                                            const cor = sec ? sec.cor : '#6366f1';
+                                            return (
+                                                <span 
+                                                    className="badge" 
+                                                    style={{ 
+                                                        backgroundColor: `${cor}15`,
+                                                        color: cor,
+                                                        border: `1px solid ${cor}30`
+                                                    }}
+                                                >
+                                                    {p.status_kanban}
+                                                </span>
+                                            );
+                                        })()}
                                     </td>
                                 </tr>
                             ))}

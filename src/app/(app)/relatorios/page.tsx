@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { useProcessos } from '@/hooks/useProcessos';
-import { calcularRisco, RISCO_LABELS, TIPOS_ASSUNTO, STATUS_KANBAN_LABELS } from '@/lib/types';
+import { calcularRisco, RISCO_LABELS, TIPOS_ASSUNTO } from '@/lib/types';
 import { differenceInDays, format, parseISO } from 'date-fns';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
