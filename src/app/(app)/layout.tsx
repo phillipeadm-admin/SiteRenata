@@ -5,11 +5,15 @@ import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 
 import { useAuth } from '@/hooks/AuthContext';
+import { useRotinaAutomation } from '@/hooks/useRotinaAutomation';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const { authenticated, loading } = useAuth();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+    // Inicializa automação de rotinas
+    useRotinaAutomation();
 
     useEffect(() => {
         if (!loading && !authenticated) {

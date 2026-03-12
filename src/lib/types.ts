@@ -41,6 +41,9 @@ export interface Processo {
     numero_processo: string | null;
     datas_intermediarias?: DataIntermediaria[] | null;
     recorrente?: boolean | null;
+    frequencia?: 'diaria' | 'semanal' | 'mensal' | 'anual' | null;
+    dia_execucao?: number | null; // Dia da semana (0-6) ou dia do mês (1-31)
+    proxima_execucao?: string | null;
     created_at: string;
     updated_at: string;
 }
