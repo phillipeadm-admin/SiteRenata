@@ -1,9 +1,12 @@
-export type StatusKanban =
-    | 'triagem'
-    | 'em_execucao'
-    | 'aguardando_revisao'
-    | 'ajustes'
-    | 'finalizado';
+export type StatusKanban = string;
+
+export interface StatusKanbanDef {
+    id: string;
+    nome: string;
+    cor: string;
+    ordem: number;
+    ativo: boolean;
+}
 
 export type RiscoStatus = 'no_prazo' | 'atencao' | 'critico' | 'finalizado';
 
@@ -64,27 +67,13 @@ export const TIPOS_ASSUNTO = [
     'Outros',
 ];
 
-export const STATUS_KANBAN_LABELS: Record<StatusKanban, string> = {
-    triagem: 'Triagem / Backlog',
-    em_execucao: 'Em Execução',
-    aguardando_revisao: 'Aguardando Revisão',
-    ajustes: 'Ajustes',
-    finalizado: 'Finalizado',
-};
-
-export const STATUS_KANBAN_COLORS: Record<StatusKanban, string> = {
-    triagem: '#6366f1',
-    em_execucao: '#3b82f6',
-    aguardando_revisao: '#f59e0b',
-    ajustes: '#ef4444',
-    finalizado: '#10b981',
-};
+// AS CORES E LABELS AGORA VÊM DO BANCO DE DADOS (renata_status_kanban)
 
 export function calcularRisco(
     dataPrazo: string | null,
     status: StatusKanban
 ): RiscoStatus {
-    if (status === 'finalizado') return 'finalizado';
+    if (status && status.toLowerCase().includes('finalizado')) return 'finalizado';
     if (!dataPrazo) return 'no_prazo';
     const hoje = new Date();
     const prazo = new Date(dataPrazo);

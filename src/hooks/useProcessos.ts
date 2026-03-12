@@ -94,7 +94,7 @@ export function useProcessos() {
             const data: Partial<Processo> = {
                 status_kanban: novoStatus,
                 data_finalizacao:
-                    novoStatus === 'finalizado' ? new Date().toISOString() : null,
+                    novoStatus.toLowerCase().includes('finalizado') ? new Date().toISOString() : null,
             };
             await atualizarProcesso(id, data);
         },
@@ -104,7 +104,7 @@ export function useProcessos() {
     return {
         processos, // Todos
         processosAtivos: processos.filter(p => {
-            if (p.status_kanban !== 'finalizado') return true;
+            if (!p.status_kanban.toLowerCase().includes('finalizado')) return true;
             if (!p.data_finalizacao) return true;
             
             const trintaDiasEmMs = 30 * 24 * 60 * 60 * 1000;
@@ -114,7 +114,7 @@ export function useProcessos() {
             return (agora - dataFinal) < trintaDiasEmMs;
         }),
         processosArquivados: processos.filter(p => {
-            if (p.status_kanban !== 'finalizado') return false;
+            if (!p.status_kanban.toLowerCase().includes('finalizado')) return false;
             if (!p.data_finalizacao) return false;
             
             const trintaDiasEmMs = 30 * 24 * 60 * 60 * 1000;

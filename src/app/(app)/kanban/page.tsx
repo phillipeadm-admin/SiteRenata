@@ -3,11 +3,10 @@
 import { useState, useRef, useMemo } from 'react';
 import { useProcessos } from '@/hooks/useProcessos';
 import { useRotinas } from '@/hooks/useRotinas';
+import { useCadastros } from '@/hooks/useCadastros';
 import ProcessoModal from '@/components/ProcessoModal';
-import { Processo, StatusKanban, STATUS_KANBAN_LABELS, STATUS_KANBAN_COLORS, calcularRisco, RISCO_LABELS } from '@/lib/types';
+import { Processo, StatusKanban, calcularRisco, RISCO_LABELS } from '@/lib/types';
 import { differenceInDays, format, parseISO } from 'date-fns';
-
-const COLUMNS: StatusKanban[] = ['triagem', 'em_execucao', 'aguardando_revisao', 'ajustes', 'finalizado'];
 
 export default function KanbanPage() {
     const {
@@ -22,12 +21,14 @@ export default function KanbanPage() {
         moverKanban: moverRotina
     } = useRotinas();
 
+    const { statusAtivos, loaded: loadedCadastros } = useCadastros();
+
     // Set de IDs de processos para identificar a origem de cada card
     const processoIds = useMemo(() => new Set(processosAtivos.map(p => p.id)), [processosAtivos]);
 
     // Todos os itens juntos
     const todos = useMemo(() => [...processosAtivos, ...rotinas], [processosAtivos, rotinas]);
-    const loading = loadingP || loadingR;
+    const loading = loadingP || loadingR || !loadedCadastros;
 
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedProcesso, setSelectedProcesso] = useState<Processo | null>(null);
@@ -145,9 +146,11 @@ export default function KanbanPage() {
 
             <div className="page-body">
                 <div className="kanban-board">
-                    {COLUMNS.map(status => {
+                    {statusAtivos.map(statusObj => {
+                        const status = statusObj.nome;
                         const cards = getByStatus(status);
                         const isOver = dragOverCol === status;
+                        const colColor = statusObj.cor || '#3b82f6';
                         return (
                             <div
                                 key={status}
@@ -158,17 +161,17 @@ export default function KanbanPage() {
                                 style={{
                                     transition: 'background 0.2s, box-shadow 0.2s',
                                     ...(isOver ? {
-                                        background: `${STATUS_KANBAN_COLORS[status]}18`,
-                                        boxShadow: `inset 0 0 0 2px ${STATUS_KANBAN_COLORS[status]}60`,
+                                        background: `${colColor}18`,
+                                        boxShadow: `inset 0 0 0 2px ${colColor}60`,
                                         borderRadius: '16px',
                                     } : {})
                                 }}
                             >
                                 <div
                                     className="kanban-column-header"
-                                    style={{ '--col-color': STATUS_KANBAN_COLORS[status] } as React.CSSProperties}
+                                    style={{ '--col-color': colColor } as React.CSSProperties}
                                 >
-                                    <span className="kanban-column-title">{STATUS_KANBAN_LABELS[status]}</span>
+                                    <span className="kanban-column-title">{status}</span>
                                     <span className="kanban-column-count">{cards.length}</span>
                                 </div>
 
@@ -176,11 +179,11 @@ export default function KanbanPage() {
                                     {/* Zona de drop vazia */}
                                     {cards.length === 0 && (
                                         <div style={{
-                                            border: `2px dashed ${isOver ? STATUS_KANBAN_COLORS[status] : 'var(--border)'}`,
+                                            border: `2px dashed ${isOver ? colColor : 'var(--border)'}`,
                                             borderRadius: '12px',
                                             padding: '24px',
                                             textAlign: 'center',
-                                            color: isOver ? STATUS_KANBAN_COLORS[status] : 'var(--text-muted)',
+                                            color: isOver ? colColor : 'var(--text-muted)',
                                             fontSize: '12px',
                                             transition: 'all 0.2s',
                                             minHeight: '80px',
@@ -263,15 +266,15 @@ export default function KanbanPage() {
                                                     style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid var(--border)', display: 'flex', gap: '4px', flexWrap: 'wrap' }}
                                                     onClick={e => e.stopPropagation()}
                                                 >
-                                                    {COLUMNS.filter(s => s !== status).map(s => (
+                                                    {statusAtivos.filter(s => s.nome !== status).map(s => (
                                                         <button
-                                                            key={s}
+                                                            key={s.nome}
                                                             className="btn btn-secondary btn-sm"
                                                             style={{ fontSize: '10px', padding: '3px 7px' }}
-                                                            onClick={() => moverKanban(p.id, s)}
-                                                            title={`Mover para ${STATUS_KANBAN_LABELS[s]}`}
+                                                            onClick={() => moverKanban(p.id, s.nome)}
+                                                            title={`Mover para ${s.nome}`}
                                                         >
-                                                            → {STATUS_KANBAN_LABELS[s].split('/')[0].trim()}
+                                                            → {s.nome.split('/')[0].trim()}
                                                         </button>
                                                     ))}
                                                 </div>
@@ -282,11 +285,11 @@ export default function KanbanPage() {
                                     {/* Drop zone extra quando coluna já tem cards */}
                                     {cards.length > 0 && isOver && (
                                         <div style={{
-                                            border: `2px dashed ${STATUS_KANBAN_COLORS[status]}`,
+                                            border: `2px dashed ${colColor}`,
                                             borderRadius: '12px',
                                             padding: '12px',
                                             textAlign: 'center',
-                                            color: STATUS_KANBAN_COLORS[status],
+                                            color: colColor,
                                             fontSize: '12px',
                                             marginTop: '4px',
                                             animation: 'pulse 1s infinite',

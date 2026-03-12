@@ -12,21 +12,25 @@ interface Props {
 }
 
 export default function ProcessoModal({ processo, onSave, onClose, onDelete }: Props) {
-    const { tiposAtivos, executoresAtivos, revisoresAtivos } = useCadastros();
+    const { tiposAtivos, executoresAtivos, statusAtivos } = useCadastros();
 
     const [form, setForm] = useState({
         assunto: processo?.assunto ?? '',
         tipo_assunto: processo?.tipo_assunto ?? (tiposAtivos[0]?.nome ?? ''),
-        responsavel_execucao: processo?.responsavel_execucao ?? '',
-        responsavel_revisao: processo?.responsavel_revisao ?? '',
+        numero_processo: processo?.numero_processo ?? '',
+        observacoes: processo?.observacoes ?? '',
         data_entrada: processo?.data_entrada
             ? processo.data_entrada.slice(0, 10)
             : new Date().toISOString().slice(0, 10),
         data_prazo: processo?.data_prazo ? processo.data_prazo.slice(0, 10) : '',
-        status_kanban: processo?.status_kanban ?? ('triagem' as StatusKanban),
-        numero_processo: processo?.numero_processo ?? '',
-        observacoes: processo?.observacoes ?? '',
+        status_kanban: processo?.status_kanban ?? (statusAtivos[0]?.nome ?? 'Triagem / Backlog'),
     });
+
+    const [responsaveis, setResponsaveis] = useState<string[]>(
+        processo?.responsavel_execucao 
+            ? processo.responsavel_execucao.split(',').map(s => s.trim()).filter(Boolean) 
+            : []
+    );
 
     // Datas Intermediárias
     const [datasInter, setDatasInter] = useState<DataIntermediaria[]>(
@@ -54,8 +58,9 @@ export default function ProcessoModal({ processo, onSave, onClose, onDelete }: P
         const datasValidas = datasInter.filter(d => d.data.trim() !== '');
         await onSave({
             ...form,
+            responsavel_execucao: responsaveis.join(', '),
+            responsavel_revisao: null,
             data_prazo: form.data_prazo || null,
-            responsavel_revisao: form.responsavel_revisao || null,
             numero_processo: form.numero_processo || null,
             observacoes: form.observacoes || null,
             datas_intermediarias: datasValidas.length > 0 ? datasValidas : null,
@@ -120,36 +125,31 @@ export default function ProcessoModal({ processo, onSave, onClose, onDelete }: P
                         </div>
 
                         {/* Responsáveis */}
-                        <div className="form-grid">
-                            <div className="form-group">
-                                <label className="form-label">Responsável Execução</label>
-                                <select
-                                    className="form-select"
-                                    value={form.responsavel_execucao}
-                                    onChange={(e) => setForm({ ...form, responsavel_execucao: e.target.value })}
-                                >
-                                    <option value="">— Sem Executor —</option>
-                                    {executoresAtivos.map((r) => (
-                                        <option key={r.id} value={r.nome}>
-                                            {r.nome}{r.cargo ? ` — ${r.cargo}` : ''}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Responsável Revisão</label>
-                                <select
-                                    className="form-select"
-                                    value={form.responsavel_revisao}
-                                    onChange={(e) => setForm({ ...form, responsavel_revisao: e.target.value })}
-                                >
-                                    <option value="">— Sem Revisor —</option>
-                                    {revisoresAtivos.map((r) => (
-                                        <option key={r.id} value={r.nome}>
-                                            {r.nome}{r.cargo ? ` — ${r.cargo}` : ''}
-                                        </option>
-                                    ))}
-                                </select>
+                        {/* Responsáveis */}
+                        <div className="form-group">
+                            <label className="form-label">Responsáveis</label>
+                            <div style={{
+                                display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '8px',
+                                padding: '12px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border)',
+                                maxHeight: '160px', overflowY: 'auto'
+                            }}>
+                                {executoresAtivos.length === 0 ? (
+                                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Nenhum responsável cadastrado.</span>
+                                ) : (
+                                    executoresAtivos.map(r => (
+                                        <label key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', cursor: 'pointer' }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={responsaveis.includes(r.nome)}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) setResponsaveis([...responsaveis, r.nome]);
+                                                    else setResponsaveis(responsaveis.filter(n => n !== r.nome));
+                                                }}
+                                            />
+                                            {r.nome}{r.cargo ? ` (${r.cargo})` : ''}
+                                        </label>
+                                    ))
+                                )}
                             </div>
                         </div>
 
@@ -180,12 +180,12 @@ export default function ProcessoModal({ processo, onSave, onClose, onDelete }: P
                                     className="form-select"
                                     value={form.status_kanban}
                                     onChange={(e) => setForm({ ...form, status_kanban: e.target.value as StatusKanban })}
+                                    required
                                 >
-                                    <option value="triagem">Triagem / Backlog</option>
-                                    <option value="em_execucao">Em Execução</option>
-                                    <option value="aguardando_revisao">Aguardando Revisão</option>
-                                    <option value="ajustes">Ajustes</option>
-                                    <option value="finalizado">Finalizado</option>
+                                    {statusAtivos.length === 0 && <option value="Triagem / Backlog">Triagem / Backlog</option>}
+                                    {statusAtivos.map(s => (
+                                        <option key={s.id} value={s.nome}>{s.nome}</option>
+                                    ))}
                                 </select>
                             </div>
                         </div>

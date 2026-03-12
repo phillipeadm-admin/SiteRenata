@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 
+import { StatusKanbanDef } from '@/lib/types';
+
 export interface TipoAssunto {
     id: string;
     nome: string;
@@ -20,22 +22,25 @@ export interface Responsavel {
 interface Cadastros {
     tiposAssunto: TipoAssunto[];
     responsaveis: Responsavel[];
+    statusKanban: StatusKanbanDef[];
 }
 
 export function useCadastros() {
-    const [cadastros, setCadastros] = useState<Cadastros>({ tiposAssunto: [], responsaveis: [] });
+    const [cadastros, setCadastros] = useState<Cadastros>({ tiposAssunto: [], responsaveis: [], statusKanban: [] });
     const [loaded, setLoaded] = useState(false);
 
     const fetchCadastros = useCallback(async () => {
-        const [tiposRes, respsRes] = await Promise.all([
+        const [tiposRes, respsRes, statusRes] = await Promise.all([
             supabase.from('renata_tipos_assunto').select('*').order('nome'),
-            supabase.from('renata_responsaveis').select('*').order('nome')
+            supabase.from('renata_responsaveis').select('*').order('nome'),
+            supabase.from('renata_status_kanban').select('*').order('ordem')
         ]);
 
-        if (!tiposRes.error && !respsRes.error) {
+        if (!tiposRes.error && !respsRes.error && !statusRes.error) {
             setCadastros({
                 tiposAssunto: tiposRes.data as TipoAssunto[],
-                responsaveis: respsRes.data as Responsavel[]
+                responsaveis: respsRes.data as Responsavel[],
+                statusKanban: statusRes.data as StatusKanbanDef[]
             });
         }
     }, []);
@@ -53,9 +58,15 @@ export function useCadastros() {
             .on('postgres_changes', { event: '*', schema: 'public', table: 'renata_responsaveis' }, fetchCadastros)
             .subscribe();
 
+        const channelStatus = supabase
+            .channel('renata_status_changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'renata_status_kanban' }, fetchCadastros)
+            .subscribe();
+
         return () => {
             supabase.removeChannel(channelTipos);
             supabase.removeChannel(channelResps);
+            supabase.removeChannel(channelStatus);
         };
     }, [fetchCadastros]);
 
@@ -71,7 +82,7 @@ export function useCadastros() {
     };
 
     const toggleTipo = async (id: string) => {
-        const found = cadastros.tiposAssunto.find(t => t.id === id);
+        const found = cadastros.tiposAssunto.find((t: any) => t.id === id);
         if (found) {
             await supabase.from('renata_tipos_assunto').update({ ativo: !found.ativo }).eq('id', id);
             await fetchCadastros();
@@ -104,7 +115,7 @@ export function useCadastros() {
     };
 
     const toggleResponsavel = async (id: string) => {
-        const found = cadastros.responsaveis.find(r => r.id === id);
+        const found = cadastros.responsaveis.find((r: any) => r.id === id);
         if (found) {
             await supabase.from('renata_responsaveis').update({ ativo: !found.ativo }).eq('id', id);
             await fetchCadastros();
@@ -116,14 +127,35 @@ export function useCadastros() {
         await fetchCadastros();
     };
 
+    /* ---- STATUS KANBAN ---- */
+    const addStatus = async (nome: string, cor: string, ordem: number) => {
+        await supabase.from('renata_status_kanban').insert([{ nome: nome.trim(), cor: cor.trim(), ordem, ativo: true }]);
+        await fetchCadastros();
+    };
+
+    const updateStatus = async (id: string, nome: string, cor: string, ordem: number) => {
+        await supabase.from('renata_status_kanban').update({ nome: nome.trim(), cor: cor.trim(), ordem }).eq('id', id);
+        await fetchCadastros();
+    };
+
+    const toggleStatus = async (id: string) => {
+        const found = cadastros.statusKanban.find((s: any) => s.id === id);
+        if (found) {
+            await supabase.from('renata_status_kanban').update({ ativo: !found.ativo }).eq('id', id);
+            await fetchCadastros();
+        }
+    };
+
+    const deleteStatus = async (id: string) => {
+        await supabase.from('renata_status_kanban').delete().eq('id', id);
+        await fetchCadastros();
+    };
+
     /* Listas filtradas */
-    const tiposAtivos = cadastros.tiposAssunto.filter(t => t.ativo);
-    const executoresAtivos = cadastros.responsaveis.filter(
-        r => r.ativo && (r.tipo === 'execucao' || r.tipo === 'ambos')
-    );
-    const revisoresAtivos = cadastros.responsaveis.filter(
-        r => r.ativo && (r.tipo === 'revisao' || r.tipo === 'ambos')
-    );
+    const tiposAtivos = cadastros.tiposAssunto.filter((t: any) => t.ativo);
+    const executoresAtivos = cadastros.responsaveis.filter((r: any) => r.ativo);
+    const revisoresAtivos = cadastros.responsaveis.filter((r: any) => false); // DEPRECATED: removendo revisores
+    const statusAtivos = cadastros.statusKanban.filter((s: any) => s.ativo).sort((a: any, b: any) => a.ordem - b.ordem);
 
     return {
         cadastros,
@@ -131,7 +163,9 @@ export function useCadastros() {
         tiposAtivos,
         executoresAtivos,
         revisoresAtivos,
+        statusAtivos,
         addTipo, updateTipo, toggleTipo, deleteTipo,
         addResponsavel, updateResponsavel, toggleResponsavel, deleteResponsavel,
+        addStatus, updateStatus, toggleStatus, deleteStatus,
     };
 }

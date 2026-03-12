@@ -93,7 +93,7 @@ export function useRotinas() {
             const data: Partial<Processo> = {
                 status_kanban: novoStatus,
                 data_finalizacao:
-                    novoStatus === 'finalizado' ? new Date().toISOString() : null,
+                    novoStatus.toLowerCase().includes('finalizado') ? new Date().toISOString() : null,
             };
             await atualizarRotina(id, data);
         },

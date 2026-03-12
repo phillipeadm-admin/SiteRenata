@@ -12,20 +12,24 @@ interface Props {
 }
 
 export default function RotinaModal({ rotina, onSave, onClose, onDelete }: Props) {
-    const { tiposAtivos, executoresAtivos, revisoresAtivos } = useCadastros();
+    const { tiposAtivos, executoresAtivos, statusAtivos } = useCadastros();
 
     const [form, setForm] = useState({
         assunto: rotina?.assunto ?? '',
         tipo_assunto: rotina?.tipo_assunto ?? (tiposAtivos[0]?.nome ?? ''),
-        responsavel_execucao: rotina?.responsavel_execucao ?? '',
-        responsavel_revisao: rotina?.responsavel_revisao ?? '',
+        observacoes: rotina?.observacoes ?? '',
         data_entrada: rotina?.data_entrada
             ? rotina.data_entrada.slice(0, 10)
             : new Date().toISOString().slice(0, 10),
         data_prazo: rotina?.data_prazo ? rotina.data_prazo.slice(0, 10) : '',
-        status_kanban: rotina?.status_kanban ?? ('triagem' as StatusKanban),
-        observacoes: rotina?.observacoes ?? '',
+        status_kanban: rotina?.status_kanban ?? (statusAtivos[0]?.nome ?? 'triagem'),
     });
+
+    const [responsaveis, setResponsaveis] = useState<string[]>(
+        rotina?.responsavel_execucao 
+            ? rotina.responsavel_execucao.split(',').map(s => s.trim()).filter(Boolean) 
+            : []
+    );
 
     // Datas Intermediárias
     const [datasInter, setDatasInter] = useState<DataIntermediaria[]>(
@@ -54,8 +58,8 @@ export default function RotinaModal({ rotina, onSave, onClose, onDelete }: Props
         await onSave({
             ...form,
             data_prazo: form.data_prazo || null,
-            responsavel_execucao: form.responsavel_execucao || '',
-            responsavel_revisao: form.responsavel_revisao || null,
+            responsavel_execucao: responsaveis.join(', ') || null,
+            responsavel_revisao: null,
             numero_processo: null, // Rotinas não têm número de processo
             observacoes: form.observacoes || null,
             datas_intermediarias: datasValidas.length > 0 ? datasValidas : null,
@@ -109,36 +113,30 @@ export default function RotinaModal({ rotina, onSave, onClose, onDelete }: Props
                         </div>
 
                         {/* Responsáveis */}
-                        <div className="form-grid">
-                            <div className="form-group">
-                                <label className="form-label">Responsável Execução</label>
-                                <select
-                                    className="form-select"
-                                    value={form.responsavel_execucao}
-                                    onChange={(e) => setForm({ ...form, responsavel_execucao: e.target.value })}
-                                >
-                                    <option value="">— Sem Executor —</option>
-                                    {executoresAtivos.map((r) => (
-                                        <option key={r.id} value={r.nome}>
-                                            {r.nome}{r.cargo ? ` — ${r.cargo}` : ''}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Responsável Revisão</label>
-                                <select
-                                    className="form-select"
-                                    value={form.responsavel_revisao}
-                                    onChange={(e) => setForm({ ...form, responsavel_revisao: e.target.value })}
-                                >
-                                    <option value="">— Sem Revisor —</option>
-                                    {revisoresAtivos.map((r) => (
-                                        <option key={r.id} value={r.nome}>
-                                            {r.nome}{r.cargo ? ` — ${r.cargo}` : ''}
-                                        </option>
-                                    ))}
-                                </select>
+                        <div className="form-group">
+                            <label className="form-label">Responsáveis</label>
+                            <div style={{
+                                display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '8px',
+                                padding: '12px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border)',
+                                maxHeight: '160px', overflowY: 'auto'
+                            }}>
+                                {executoresAtivos.length === 0 ? (
+                                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Nenhum responsável cadastrado.</span>
+                                ) : (
+                                    executoresAtivos.map(r => (
+                                        <label key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', cursor: 'pointer' }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={responsaveis.includes(r.nome)}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) setResponsaveis([...responsaveis, r.nome]);
+                                                    else setResponsaveis(responsaveis.filter(n => n !== r.nome));
+                                                }}
+                                            />
+                                            {r.nome}{r.cargo ? ` (${r.cargo})` : ''}
+                                        </label>
+                                    ))
+                                )}
                             </div>
                         </div>
 
@@ -169,12 +167,12 @@ export default function RotinaModal({ rotina, onSave, onClose, onDelete }: Props
                                     className="form-select"
                                     value={form.status_kanban}
                                     onChange={(e) => setForm({ ...form, status_kanban: e.target.value as StatusKanban })}
+                                    required
                                 >
-                                    <option value="triagem">Triagem / Backlog</option>
-                                    <option value="em_execucao">Em Execução</option>
-                                    <option value="aguardando_revisao">Aguardando Revisão</option>
-                                    <option value="ajustes">Ajustes</option>
-                                    <option value="finalizado">Finalizado</option>
+                                    {statusAtivos.length === 0 && <option value="triagem">Triagem / Backlog</option>}
+                                    {statusAtivos.map(s => (
+                                        <option key={s.id} value={s.nome}>{s.nome}</option>
+                                    ))}
                                 </select>
                             </div>
                         </div>
