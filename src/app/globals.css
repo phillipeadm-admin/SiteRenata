@@ -479,6 +479,46 @@ body {
   border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
+.risk-config-panel {
+    display: flex;
+    gap: 20px;
+    background: var(--bg-card);
+    padding: 10px 20px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    margin-left: auto;
+}
+
+.risk-config-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.risk-config-item label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.risk-config-item input {
+    background: var(--bg-body);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 6px;
+    padding: 4px 8px;
+    width: 60px;
+    font-size: 13px;
+    font-weight: 600;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.risk-config-item input:focus {
+    border-color: var(--accent-purple);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
 .badge-risco-vencido {
     background: #fee2e2;
     color: #991b1b;

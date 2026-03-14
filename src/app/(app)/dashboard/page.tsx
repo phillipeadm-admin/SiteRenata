@@ -15,7 +15,10 @@ import {
 export default function DashboardPage() {
     const { processosAtivos, loading: loadingP } = useProcessos();
     const { rotinas, loading: loadingR } = useRotinas();
-    const { statusAtivos } = useCadastros();
+    const { statusAtivos, cadastros, updateConfig } = useCadastros();
+
+    const thresholdCritico = parseInt(cadastros.config.prazo_critico || '3');
+    const thresholdAtencao = parseInt(cadastros.config.prazo_atencao || '7');
 
     // Consolida processos + rotinas em um único array para o dashboard
     const todos = useMemo(() => [...processosAtivos, ...rotinas], [processosAtivos, rotinas]);
@@ -23,23 +26,27 @@ export default function DashboardPage() {
 
     const stats = useMemo(() => {
         const total = todos.length;
-        const finalizados = todos.filter(p => p.status_kanban === 'finalizado').length;
-        const emExecucao = todos.filter(p => p.status_kanban === 'em_execucao').length;
-        const criticos = todos.filter(p => {
-            const risco = calcularRisco(p.data_prazo, p.status_kanban);
-            return risco === 'critico' || risco === 'vencido';
+        const finalizados = todos.filter(p => p.status_kanban.toUpperCase() === 'FINALIZADO').length;
+        
+        // Em Execução: Tudo que não é triagem/entrada nem finalizado/arquivo
+        const emExecucao = todos.filter(p => {
+            const st = p.status_kanban.toUpperCase();
+            return st !== 'TRIAGEM' && st !== 'FINALIZADO' && st !== 'ARQUIVO' && st !== 'ARQUIVADO';
         }).length;
-        const atencao = todos.filter(p => calcularRisco(p.data_prazo, p.status_kanban) === 'atencao').length;
+
+        const vencidos = todos.filter(p => calcularRisco(p.data_prazo, p.status_kanban, thresholdCritico, thresholdAtencao) === 'vencido').length;
+        const criticos = todos.filter(p => calcularRisco(p.data_prazo, p.status_kanban, thresholdCritico, thresholdAtencao) === 'critico').length;
+        const atencao = todos.filter(p => calcularRisco(p.data_prazo, p.status_kanban, thresholdCritico, thresholdAtencao) === 'atencao').length;
 
         const leadTimes = todos
-            .filter(p => p.status_kanban === 'finalizado' && p.data_finalizacao)
+            .filter(p => p.status_kanban.toUpperCase() === 'FINALIZADO' && p.data_finalizacao)
             .map(p => differenceInDays(parseISO(p.data_finalizacao!), parseISO(p.data_entrada)));
         const mediaLeadTime = leadTimes.length
             ? Math.round(leadTimes.reduce((a, b) => a + b, 0) / leadTimes.length)
             : 0;
 
-        return { total, finalizados, emExecucao, criticos, atencao, mediaLeadTime };
-    }, [todos]);
+        return { total, finalizados, emExecucao, vencidos, criticos, atencao, mediaLeadTime };
+    }, [todos, thresholdCritico, thresholdAtencao]);
 
     const kanbanData = useMemo(() => {
         const map: Record<string, number> = {};
@@ -61,15 +68,20 @@ export default function DashboardPage() {
         return Object.entries(map).map(([name, value]) => ({ name, value }));
     }, [todos]);
 
-    const processosCriticos = useMemo(() =>
-        todos
+    const processosCriticos = useMemo(() => {
+        return todos
             .filter(p => {
-                const risco = calcularRisco(p.data_prazo, p.status_kanban);
-                return risco === 'critico' || risco === 'vencido';
+                const risco = calcularRisco(p.data_prazo, p.status_kanban, thresholdCritico, thresholdAtencao);
+                return (risco === 'critico' || risco === 'vencido') && p.status_kanban.toUpperCase() !== 'FINALIZADO';
             })
-            .sort((a, b) => (a.data_prazo ?? '').localeCompare(b.data_prazo ?? '')),
-        [todos]
-    );
+            .sort((a, b) => {
+                const ra = calcularRisco(a.data_prazo, a.status_kanban, thresholdCritico, thresholdAtencao);
+                const rb = calcularRisco(b.data_prazo, b.status_kanban, thresholdCritico, thresholdAtencao);
+                if (ra === 'vencido' && rb !== 'vencido') return -1;
+                if (ra !== 'vencido' && rb === 'vencido') return 1;
+                return (a.data_prazo ?? '').localeCompare(b.data_prazo ?? '');
+            });
+    }, [todos, thresholdCritico, thresholdAtencao]);
 
     const processosRecentes = useMemo(() =>
         [...todos]
@@ -95,6 +107,29 @@ export default function DashboardPage() {
                         {format(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                     </p>
                 </div>
+
+                <div className="risk-config-panel">
+                    <div className="risk-config-item">
+                        <label>Limiar Crítico (dias)</label>
+                        <input 
+                            type="number" 
+                            value={thresholdCritico} 
+                            onChange={(e) => updateConfig('prazo_critico', e.target.value)}
+                            min="1"
+                            max="30"
+                        />
+                    </div>
+                    <div className="risk-config-item">
+                        <label>Limiar Atenção (dias)</label>
+                        <input 
+                            type="number" 
+                            value={thresholdAtencao} 
+                            onChange={(e) => updateConfig('prazo_atencao', e.target.value)}
+                            min="1"
+                            max="60"
+                        />
+                    </div>
+                </div>
             </div>
 
             <div className="page-body">
@@ -112,17 +147,23 @@ export default function DashboardPage() {
                         <div className="kpi-value">{stats.emExecucao}</div>
                         <div className="kpi-change">atividades em andamento</div>
                     </div>
-                    <div className="kpi-card" style={{ '--kpi-color': 'var(--accent-red)' } as React.CSSProperties}>
-                        <span className="kpi-icon">🚨</span>
-                        <div className="kpi-label">Críticos</div>
-                        <div className="kpi-value">{stats.criticos}</div>
-                        <div className="kpi-change">prazo vencido ou ≤ 3 dias</div>
-                    </div>
                     <div className="kpi-card" style={{ '--kpi-color': 'var(--accent-yellow)' } as React.CSSProperties}>
                         <span className="kpi-icon">⚠️</span>
                         <div className="kpi-label">Atenção</div>
                         <div className="kpi-value">{stats.atencao}</div>
-                        <div className="kpi-change">prazo entre 4-7 dias</div>
+                        <div className="kpi-change">prazo de {thresholdCritico + 1} a {thresholdAtencao} dias</div>
+                    </div>
+                    <div className="kpi-card" style={{ '--kpi-color': 'var(--accent-red)' } as React.CSSProperties}>
+                        <span className="kpi-icon">🚨</span>
+                        <div className="kpi-label">Críticos</div>
+                        <div className="kpi-value">{stats.criticos}</div>
+                        <div className="kpi-change">prazo até {thresholdCritico} dias</div>
+                    </div>
+                    <div className="kpi-card" style={{ '--kpi-color': '#991b1b' } as React.CSSProperties}>
+                        <span className="kpi-icon">🛑</span>
+                        <div className="kpi-label">Vencidos</div>
+                        <div className="kpi-value">{stats.vencidos}</div>
+                        <div className="kpi-change">prazo ultrapassado</div>
                     </div>
                     <div className="kpi-card" style={{ '--kpi-color': 'var(--accent-green)' } as React.CSSProperties}>
                         <span className="kpi-icon">✅</span>
@@ -168,8 +209,8 @@ export default function DashboardPage() {
                                                     : 'Sem prazo'}
                                             </td>
                                              <td>
-                                                 <span className={`badge badge-risco-${calcularRisco(p.data_prazo, p.status_kanban)}`}>
-                                                     {calcularRisco(p.data_prazo, p.status_kanban) === 'vencido' ? '🚨 Vencido' : '⚠️ Crítico'}
+                                                 <span className={`badge badge-risco-${calcularRisco(p.data_prazo, p.status_kanban, thresholdCritico, thresholdAtencao)}`}>
+                                                     {calcularRisco(p.data_prazo, p.status_kanban, thresholdCritico, thresholdAtencao) === 'vencido' ? '🚨 Vencido' : '⚠️ Crítico'}
                                                  </span>
                                              </td>
                                         </tr>
