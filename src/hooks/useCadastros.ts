@@ -26,10 +26,17 @@ interface Cadastros {
     responsaveis: Responsavel[];
     statusKanban: StatusKanbanDef[];
     fluxoEtapas: FluxoEtapa[];
+    config: Record<string, string>;
 }
 
 export function useCadastros() {
-    const [cadastros, setCadastros] = useState<Cadastros>({ tiposAssunto: [], responsaveis: [], statusKanban: [], fluxoEtapas: [] });
+    const [cadastros, setCadastros] = useState<Cadastros>({ 
+        tiposAssunto: [], 
+        responsaveis: [], 
+        statusKanban: [], 
+        fluxoEtapas: [],
+        config: { prazo_critico: '3', prazo_atencao: '7' }
+    });
     const [loaded, setLoaded] = useState(false);
 
     const fetchCadastros = useCallback(async () => {
@@ -43,6 +50,13 @@ export function useCadastros() {
 
             const [tiposRes, respsRes, statusRes, fluxoRes] = results;
 
+            // Busca configurações (silenciosamente falha se a tabela não existir)
+            const { data: configData } = await supabase.from('renata_config').select('key, value');
+            const configMap: Record<string, string> = { prazo_critico: '3', prazo_atencao: '7' };
+            if (configData) {
+                configData.forEach(c => configMap[c.key] = c.value);
+            }
+
             if (tiposRes.error) console.error("Erro ao buscar tipos:", tiposRes.error);
             if (respsRes.error) console.error("Erro ao buscar responsáveis:", respsRes.error);
             if (statusRes.error) console.error("Erro ao buscar status:", statusRes.error);
@@ -52,7 +66,8 @@ export function useCadastros() {
                 tiposAssunto: (tiposRes.data || []) as TipoAssunto[],
                 responsaveis: (respsRes.data || []) as Responsavel[],
                 statusKanban: (statusRes.data || []) as StatusKanbanDef[],
-                fluxoEtapas: (fluxoRes.data || []) as FluxoEtapa[]
+                fluxoEtapas: (fluxoRes.data || []) as FluxoEtapa[],
+                config: configMap
             });
         } catch (err) {
             console.error("Erro fatal ao carregar cadastros:", err);
@@ -82,11 +97,17 @@ export function useCadastros() {
             .on('postgres_changes', { event: '*', schema: 'public', table: 'renata_fluxo_etapas' }, fetchCadastros)
             .subscribe();
 
+        const channelConfig = supabase
+            .channel('renata_config_changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'renata_config' }, fetchCadastros)
+            .subscribe();
+
         return () => {
             supabase.removeChannel(channelTipos);
             supabase.removeChannel(channelResps);
             supabase.removeChannel(channelStatus);
             supabase.removeChannel(channelFluxo);
+            supabase.removeChannel(channelConfig);
         };
     }, [fetchCadastros]);
 
@@ -345,6 +366,21 @@ export function useCadastros() {
         await fetchCadastros();
     };
 
+    /* ---- CONFIGURAÇÕES ---- */
+    const updateConfig = async (key: string, value: string) => {
+        const { error } = await supabase.from('renata_config').upsert({ key, value });
+        if (error) {
+            console.error("Erro ao atualizar config:", error);
+            // Se falhar porque a tabela não existe, tentamos criar a tabela via RPC ou apenas avisamos
+            if (error.code === '42P01') {
+                alert("A tabela de configurações ainda não foi criada no banco de dados.");
+            } else {
+                alert("Erro ao salvar configuração: " + error.message);
+            }
+        }
+        await fetchCadastros();
+    };
+
     /* Listas filtradas */
     const tiposAtivos: TipoAssunto[] = cadastros.tiposAssunto.filter((t: TipoAssunto) => t.ativo);
     const executoresAtivos: Responsavel[] = cadastros.responsaveis.filter((r: Responsavel) => r.ativo && (r.tipo === 'execucao' || r.tipo === 'ambos'));
@@ -358,6 +394,7 @@ export function useCadastros() {
         executoresAtivos,
         revisoresAtivos,
         statusAtivos,
+        updateConfig,
         addTipo, updateTipo, toggleTipo, deleteTipo,
         addResponsavel, updateResponsavel, toggleResponsavel, deleteResponsavel,
         addStatus, updateStatus, toggleStatus, deleteStatus,

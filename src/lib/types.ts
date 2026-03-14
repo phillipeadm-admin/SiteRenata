@@ -23,7 +23,7 @@ export interface FluxoEtapa {
     created_at: string;
 }
 
-export type RiscoStatus = 'no_prazo' | 'atencao' | 'critico' | 'finalizado';
+export type RiscoStatus = 'no_prazo' | 'atencao' | 'critico' | 'vencido' | 'finalizado';
 
 export interface Usuario {
     id: string;
@@ -90,18 +90,24 @@ export const TIPOS_ASSUNTO = [
 
 export function calcularRisco(
     dataPrazo: string | null,
-    status: StatusKanban
+    status: StatusKanban,
+    thresholdCritico: number = 3,
+    thresholdAtencao: number = 7
 ): RiscoStatus {
     if (status && status.toLowerCase().includes('finalizado')) return 'finalizado';
     if (!dataPrazo) return 'no_prazo';
     const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
     const prazo = new Date(dataPrazo);
+    prazo.setHours(0, 0, 0, 0);
+    
     const diffDias = Math.ceil(
         (prazo.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24)
     );
-    if (diffDias < 0) return 'critico';
-    if (diffDias <= 3) return 'critico';
-    if (diffDias <= 7) return 'atencao';
+    
+    if (diffDias < 0) return 'vencido';
+    if (diffDias <= thresholdCritico) return 'critico';
+    if (diffDias <= thresholdAtencao) return 'atencao';
     return 'no_prazo';
 }
 
@@ -109,6 +115,7 @@ export const RISCO_LABELS: Record<RiscoStatus, string> = {
     no_prazo: 'No Prazo',
     atencao: 'Atenção',
     critico: 'Crítico',
+    vencido: 'Vencido',
     finalizado: 'Finalizado',
 };
 
@@ -116,5 +123,6 @@ export const RISCO_COLORS: Record<RiscoStatus, string> = {
     no_prazo: '#10b981',
     atencao: '#f59e0b',
     critico: '#ef4444',
+    vencido: '#991b1b', // Vermelho escuro para vencidos
     finalizado: '#6366f1',
 };

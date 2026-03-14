@@ -266,9 +266,9 @@ export default function DashboardPage() {
                                                 {(() => {
                                                     const cor = statusAtivos.find(s => s.nome === p.status_kanban)?.cor || '#6366f1';
                                                     return (
-                                                        <span 
-                                                            className="badge" 
-                                                            style={{ 
+                                                        <span
+                                                            className="badge"
+                                                            style={{
                                                                 backgroundColor: `${cor}15`,
                                                                 color: cor,
                                                                 border: `1px solid ${cor}30`

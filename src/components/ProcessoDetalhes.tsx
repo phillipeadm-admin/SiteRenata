@@ -139,7 +139,7 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
                 
                 <div style={{ 
                     display: 'flex', 
-                    gap: '12px', 
+                    gap: '8px', 
                     flex: 1,
                     width: '100%',
                     justifyContent: 'space-between'
@@ -159,29 +159,29 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
                                 onDrop={(e) => onDrop(e, status)}
                                 style={{ 
                                     flex: 1,
-                                    minWidth: '0', // Importante para o flex equilibrar as larguras
+                                    minWidth: '0',
                                     background: isOver ? 'rgba(0,0,0,0.02)' : 'var(--bg-primary)',
-                                    borderRadius: '16px',
+                                    borderRadius: '12px',
                                     border: `2px ${isOver ? 'dashed' : 'solid'} ${isOver ? (statusObj.cor || 'var(--accent-blue)') : 'var(--border)'}`,
-                                    padding: '12px',
+                                    padding: '8px',
                                     display: 'flex',
                                     flexDirection: 'column',
-                                    gap: '10px',
+                                    gap: '6px',
                                     transition: 'all 0.2s',
                                     boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
                                 }}
                             >
                                 <div style={{ 
-                                    borderBottom: `3px solid ${statusObj.cor || 'var(--accent-blue)'}`, 
-                                    paddingBottom: '8px',
-                                    marginBottom: '4px'
+                                    borderBottom: `2px solid ${statusObj.cor || 'var(--accent-blue)'}`, 
+                                    paddingBottom: '4px',
+                                    marginBottom: '2px'
                                 }}>
-                                    <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                         {status}
                                     </div>
                                 </div>
 
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
                                     {etapasNoStatus.length > 0 ? (
                                         etapasNoStatus.map((etapa) => (
                                             <div 
@@ -190,21 +190,21 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
                                                 onDragStart={(e) => onDragStart(e, etapa.id)}
                                                 style={{ 
                                                     background: 'var(--bg-secondary)',
-                                                    borderRadius: '12px',
+                                                    borderRadius: '10px',
                                                     border: '1px solid var(--border)',
-                                                    padding: '12px',
+                                                    padding: '8px',
                                                     cursor: 'grab',
                                                     opacity: draggingEtapaId === etapa.id ? 0.5 : 1,
-                                                    boxShadow: '0 2px 4px rgba(0,0,0,0.03)'
+                                                    boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
                                                 }}
                                             >
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                                                    <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
+                                                    <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
                                                         {etapa.nome}
                                                     </div>
                                                 </div>
 
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '12px' }}>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '8px' }}>
                                                     {etapa.sub_etapas?.map((sub, sIdx) => {
                                                         const isDone = !!checklistLocal[`${etapa.nome}: ${sub}`];
                                                         return (
@@ -217,25 +217,25 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
                                                                 style={{ 
                                                                     display: 'flex', 
                                                                     alignItems: 'center', 
-                                                                    gap: '6px',
-                                                                    fontSize: '12px',
+                                                                    gap: '4px',
+                                                                    fontSize: '11px',
                                                                     color: isDone ? 'var(--text-muted)' : 'var(--text-secondary)',
                                                                     cursor: 'pointer',
                                                                     userSelect: 'none',
-                                                                    padding: '2px 0'
+                                                                    padding: '1px 0'
                                                                 }}
                                                             >
                                                                 <div style={{ 
-                                                                    width: '16px', 
-                                                                    height: '16px', 
-                                                                    borderRadius: '4px', 
-                                                                    border: `1.5px solid ${isDone ? 'var(--accent-green)' : 'var(--border)'}`,
+                                                                    width: '14px', 
+                                                                    height: '14px', 
+                                                                    borderRadius: '3px', 
+                                                                    border: `1.2px solid ${isDone ? 'var(--accent-green)' : 'var(--border)'}`,
                                                                     background: isDone ? 'var(--accent-green)' : 'transparent',
                                                                     display: 'flex',
                                                                     alignItems: 'center',
                                                                     justifyContent: 'center',
                                                                     color: 'white',
-                                                                    fontSize: '10px',
+                                                                    fontSize: '9px',
                                                                     flexShrink: 0
                                                                 }}>
                                                                     {isDone && '✓'}
@@ -253,7 +253,7 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
                                                     })}
                                                 </div>
 
-                                                {/* Seletor de Responsável por Etapa - Agora ABAIXO das sub-etapas */}
+                                                {/* Seletor de Responsável por Etapa */}
                                                 <div>
                                                     <select 
                                                         value={etapa.responsavel_nome || ''}
@@ -261,12 +261,13 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
                                                         style={{
                                                             width: '100%',
                                                             fontSize: '11px',
-                                                            padding: '4px 6px',
-                                                            borderRadius: '6px',
+                                                            padding: '2px 4px',
+                                                            borderRadius: '4px',
                                                             background: 'var(--bg-primary)',
                                                             border: '1px solid var(--border)',
                                                             color: etapa.responsavel_nome ? 'var(--text-primary)' : 'var(--text-muted)',
-                                                            outline: 'none'
+                                                            outline: 'none',
+                                                            height: '24px'
                                                         }}
                                                         onClick={(e) => e.stopPropagation()}
                                                     >
@@ -277,58 +278,53 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
                                                     </select>
                                                 </div>
 
-                                                {/* Datas - Novos campos solicitados */}
+                                                {/* Datas - Lado a Lado */}
                                                 <div style={{ 
                                                     display: 'flex', 
-                                                    flexDirection: 'column',
-                                                    gap: '10px', 
-                                                    marginTop: '10px',
-                                                    padding: '10px',
-                                                    background: 'rgba(99, 102, 241, 0.05)',
-                                                    borderRadius: '12px',
+                                                    gap: '4px', 
+                                                    marginTop: '6px',
+                                                    padding: '6px',
+                                                    background: 'rgba(99, 102, 241, 0.04)',
+                                                    borderRadius: '8px',
                                                     border: '1px solid var(--border)'
                                                 }}>
-                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                        <label style={{ fontSize: '9px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Início</label>
+                                                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                                        <label style={{ fontSize: '8px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Início</label>
                                                         <input 
                                                             type="date"
                                                             value={etapa.data_inicio || ''}
                                                             onChange={(e) => vincularDatasAEtapa(etapa.id, 'data_inicio', e.target.value || null)}
                                                             onClick={(e) => e.stopPropagation()}
-                                                            className="kanban-date-input"
                                                             style={{
                                                                 width: '100%',
-                                                                fontSize: '12px',
-                                                                padding: '6px 8px',
-                                                                borderRadius: '8px',
+                                                                fontSize: '11px',
+                                                                padding: '2px 4px',
+                                                                borderRadius: '4px',
                                                                 background: 'var(--bg-primary)',
                                                                 border: '1px solid var(--border)',
                                                                 color: 'var(--text-primary)',
                                                                 outline: 'none',
-                                                                cursor: 'pointer',
-                                                                transition: 'border-color 0.2s'
+                                                                height: '24px'
                                                             }}
                                                         />
                                                     </div>
-                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                        <label style={{ fontSize: '9px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Fim</label>
+                                                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                                        <label style={{ fontSize: '8px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Fim</label>
                                                         <input 
                                                             type="date"
                                                             value={etapa.data_fim || ''}
                                                             onChange={(e) => vincularDatasAEtapa(etapa.id, 'data_fim', e.target.value || null)}
                                                             onClick={(e) => e.stopPropagation()}
-                                                            className="kanban-date-input"
                                                             style={{
                                                                 width: '100%',
-                                                                fontSize: '12px',
-                                                                padding: '6px 8px',
-                                                                borderRadius: '8px',
+                                                                fontSize: '11px',
+                                                                padding: '2px 4px',
+                                                                borderRadius: '4px',
                                                                 background: 'var(--bg-primary)',
                                                                 border: '1px solid var(--border)',
                                                                 color: 'var(--text-primary)',
                                                                 outline: 'none',
-                                                                cursor: 'pointer',
-                                                                transition: 'border-color 0.2s'
+                                                                height: '24px'
                                                             }}
                                                         />
                                                     </div>
