@@ -5,6 +5,7 @@ import { useProcessos } from '@/hooks/useProcessos';
 import { useRotinas } from '@/hooks/useRotinas';
 import { useCadastros } from '@/hooks/useCadastros';
 import ProcessoModal from '@/components/ProcessoModal';
+import RotinaModal from '@/components/RotinaModal';
 import { Processo, StatusKanban, StatusKanbanDef, calcularRisco, RISCO_LABELS } from '@/lib/types';
 import { differenceInDays, format, parseISO } from 'date-fns';
 
@@ -17,7 +18,7 @@ export default function KanbanPage() {
 
     const {
         rotinas, loading: loadingR,
-        atualizarRotina, excluirRotina,
+        criarRotina, atualizarRotina, excluirRotina,
         moverKanban: moverRotina
     } = useRotinas();
 
@@ -125,6 +126,8 @@ export default function KanbanPage() {
 
     if (loading) return <div style={{ padding: 40, color: 'var(--text-secondary)' }}>⏳ Carregando...</div>;
 
+    const isSelectedARotina = selectedProcesso && !processoIds.has(selectedProcesso.id);
+
     return (
         <>
             <div className="page-header">
@@ -212,11 +215,51 @@ export default function KanbanPage() {
                                                     transform: isDragging ? 'scale(0.97)' : 'scale(1)',
                                                     transition: 'opacity 0.15s, transform 0.15s, box-shadow 0.15s',
                                                     userSelect: 'none',
+                                                    position: 'relative',
                                                 } as React.CSSProperties}
                                                 onClick={() => { if (!isDragging) { setSelectedProcesso(p); setModalOpen(true); } }}
                                             >
+                                                {/* Botão de Editar no Canto Superior Direito */}
+                                                <button
+                                                    style={{
+                                                        position: 'absolute',
+                                                        top: '8px',
+                                                        right: '8px',
+                                                        background: 'rgba(255, 255, 255, 0.8)',
+                                                        border: '1px solid var(--border)',
+                                                        borderRadius: '6px',
+                                                        width: '24px',
+                                                        height: '24px',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        cursor: 'pointer',
+                                                        zIndex: 2,
+                                                        fontSize: '12px',
+                                                        color: 'var(--text-primary)',
+                                                        boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                                                        transition: 'all 0.2s',
+                                                    }}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setSelectedProcesso(p);
+                                                        setModalOpen(true);
+                                                    }}
+                                                    onMouseEnter={(e) => {
+                                                        e.currentTarget.style.background = 'white';
+                                                        e.currentTarget.style.transform = 'scale(1.1)';
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.8)';
+                                                        e.currentTarget.style.transform = 'scale(1)';
+                                                    }}
+                                                    title="Editar"
+                                                >
+                                                    ✏️
+                                                </button>
+
                                                 {/* Handle de drag + badge de tipo */}
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px', paddingRight: '28px' }}>
                                                     <span style={{ fontSize: '14px', color: 'var(--text-muted)', cursor: 'grab', lineHeight: 1 }} title="Arraste para mover">⠿</span>
                                                     <div className="kanban-card-title" style={{ margin: 0, flex: 1 }}>{p.tipo_assunto}</div>
                                                     {isRotina && (
@@ -303,12 +346,21 @@ export default function KanbanPage() {
             </div>
 
             {modalOpen && (
-                <ProcessoModal
-                    processo={selectedProcesso}
-                    onSave={handleSave}
-                    onClose={() => { setModalOpen(false); setSelectedProcesso(null); }}
-                    onDelete={handleDelete}
-                />
+                isSelectedARotina ? (
+                    <RotinaModal
+                        rotina={selectedProcesso}
+                        onSave={handleSave}
+                        onClose={() => { setModalOpen(false); setSelectedProcesso(null); }}
+                        onDelete={handleDelete}
+                    />
+                ) : (
+                    <ProcessoModal
+                        processo={selectedProcesso}
+                        onSave={handleSave}
+                        onClose={() => { setModalOpen(false); setSelectedProcesso(null); }}
+                        onDelete={handleDelete}
+                    />
+                )
             )}
         </>
     );
