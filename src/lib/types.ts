@@ -17,6 +17,7 @@ export interface FluxoEtapa {
     ordem: number;
     sub_etapas?: string[];
     status_vinculado?: string | null;
+    responsavel_nome?: string | null;
     created_at: string;
 }
 
