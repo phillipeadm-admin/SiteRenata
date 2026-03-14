@@ -181,7 +181,7 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
                                     </div>
                                 </div>
 
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, overflowY: 'auto' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
                                     {etapasNoStatus.length > 0 ? (
                                         etapasNoStatus.map((etapa) => (
                                             <div 
@@ -278,42 +278,55 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
                                                 </div>
 
                                                 {/* Datas - Novos campos solicitados */}
-                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', marginTop: '6px' }}>
-                                                    <div>
-                                                        <label style={{ fontSize: '9px', color: 'var(--text-muted)', display: 'block', marginBottom: '2px' }}>Início</label>
+                                                <div style={{ 
+                                                    display: 'grid', 
+                                                    gridTemplateColumns: '1fr 1fr', 
+                                                    gap: '6px', 
+                                                    marginTop: '10px',
+                                                    padding: '8px',
+                                                    background: 'rgba(99, 102, 241, 0.05)',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid var(--border)'
+                                                }}>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                        <label style={{ fontSize: '9px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Início</label>
                                                         <input 
                                                             type="date"
                                                             value={etapa.data_inicio || ''}
                                                             onChange={(e) => vincularDatasAEtapa(etapa.id, 'data_inicio', e.target.value || null)}
                                                             onClick={(e) => e.stopPropagation()}
+                                                            className="kanban-date-input"
                                                             style={{
                                                                 width: '100%',
-                                                                fontSize: '10px',
-                                                                padding: '3px 4px',
-                                                                borderRadius: '4px',
+                                                                fontSize: '11px',
+                                                                padding: '6px',
+                                                                borderRadius: '6px',
                                                                 background: 'var(--bg-primary)',
                                                                 border: '1px solid var(--border)',
                                                                 color: 'var(--text-primary)',
-                                                                outline: 'none'
+                                                                outline: 'none',
+                                                                cursor: 'pointer'
                                                             }}
                                                         />
                                                     </div>
-                                                    <div>
-                                                        <label style={{ fontSize: '9px', color: 'var(--text-muted)', display: 'block', marginBottom: '2px' }}>Fim</label>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                        <label style={{ fontSize: '9px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Fim</label>
                                                         <input 
                                                             type="date"
                                                             value={etapa.data_fim || ''}
                                                             onChange={(e) => vincularDatasAEtapa(etapa.id, 'data_fim', e.target.value || null)}
                                                             onClick={(e) => e.stopPropagation()}
+                                                            className="kanban-date-input"
                                                             style={{
                                                                 width: '100%',
-                                                                fontSize: '10px',
-                                                                padding: '3px 4px',
-                                                                borderRadius: '4px',
+                                                                fontSize: '11px',
+                                                                padding: '6px',
+                                                                borderRadius: '6px',
                                                                 background: 'var(--bg-primary)',
                                                                 border: '1px solid var(--border)',
                                                                 color: 'var(--text-primary)',
-                                                                outline: 'none'
+                                                                outline: 'none',
+                                                                cursor: 'pointer'
                                                             }}
                                                         />
                                                     </div>

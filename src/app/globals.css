@@ -583,13 +583,19 @@ tr:hover td {
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
-.form-input[type="date"]::-webkit-calendar-picker-indicator {
+.form-input[type="date"]::-webkit-calendar-picker-indicator,
+.kanban-date-input::-webkit-calendar-picker-indicator {
   filter: invert(0.8);
   cursor: pointer;
   transition: var(--transition);
 }
 
-.form-input[type="date"]::-webkit-calendar-picker-indicator:hover {
+.form-input[type="date"]::-webkit-calendar-picker-indicator:hover,
+.kanban-date-input::-webkit-calendar-picker-indicator:hover,
+.form-input[type="date"]:focus::-webkit-calendar-picker-indicator,
+.kanban-date-input:focus::-webkit-calendar-picker-indicator,
+.form-input[type="date"]:active::-webkit-calendar-picker-indicator,
+.kanban-date-input:active::-webkit-calendar-picker-indicator {
   filter: invert(1);
   transform: scale(1.1);
 }
