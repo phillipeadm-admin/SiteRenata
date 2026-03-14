@@ -94,17 +94,21 @@ export function calcularRisco(
     thresholdCritico: number = 3,
     thresholdAtencao: number = 7
 ): RiscoStatus {
-    if (status && status.toLowerCase().includes('finalizado')) return 'finalizado';
+    if (status && (status.toLowerCase().includes('finalizado') || status.toLowerCase().includes('concluído'))) return 'finalizado';
     if (!dataPrazo) return 'no_prazo';
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    const prazo = new Date(dataPrazo);
+
+    // Obter data atual no fuso horário do Brasil (Brasília)
+    const agoraBR = new Date(new Date().toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
+    const hoje = new Date(agoraBR.getFullYear(), agoraBR.getMonth(), agoraBR.getDate());
+
+    // Parse manual do prazo (sempre YYYY-MM-DD no banco) para evitar problemas de fuso
+    const [ano, mes, dia] = dataPrazo.split('-').map(Number);
+    const prazo = new Date(ano, mes - 1, dia);
     prazo.setHours(0, 0, 0, 0);
-    
-    const diffDias = Math.ceil(
-        (prazo.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24)
-    );
-    
+
+    const diffMs = prazo.getTime() - hoje.getTime();
+    const diffDias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
     if (diffDias < 0) return 'vencido';
     if (diffDias <= thresholdCritico) return 'critico';
     if (diffDias <= thresholdAtencao) return 'atencao';

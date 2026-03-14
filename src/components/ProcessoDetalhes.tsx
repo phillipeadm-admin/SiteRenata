@@ -281,15 +281,16 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
                                                 {/* Datas - Lado a Lado */}
                                                 <div style={{ 
                                                     display: 'flex', 
-                                                    gap: '4px', 
+                                                    flexDirection: 'column',
+                                                    gap: '8px', 
                                                     marginTop: '6px',
-                                                    padding: '6px',
+                                                    padding: '8px',
                                                     background: 'rgba(99, 102, 241, 0.04)',
                                                     borderRadius: '8px',
                                                     border: '1px solid var(--border)'
                                                 }}>
-                                                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                                        <label style={{ fontSize: '8px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Início</label>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                                                        <label style={{ fontSize: '9px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Início</label>
                                                         <input 
                                                             type="date"
                                                             value={etapa.data_inicio || ''}
@@ -298,18 +299,18 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
                                                             style={{
                                                                 width: '100%',
                                                                 fontSize: '11px',
-                                                                padding: '2px 4px',
-                                                                borderRadius: '4px',
+                                                                padding: '4px 8px',
+                                                                borderRadius: '6px',
                                                                 background: 'var(--bg-primary)',
                                                                 border: '1px solid var(--border)',
                                                                 color: 'var(--text-primary)',
                                                                 outline: 'none',
-                                                                height: '24px'
+                                                                height: '28px'
                                                             }}
                                                         />
                                                     </div>
-                                                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                                        <label style={{ fontSize: '8px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Fim</label>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                                                        <label style={{ fontSize: '9px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Fim</label>
                                                         <input 
                                                             type="date"
                                                             value={etapa.data_fim || ''}
@@ -318,13 +319,13 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
                                                             style={{
                                                                 width: '100%',
                                                                 fontSize: '11px',
-                                                                padding: '2px 4px',
-                                                                borderRadius: '4px',
+                                                                padding: '4px 8px',
+                                                                borderRadius: '6px',
                                                                 background: 'var(--bg-primary)',
                                                                 border: '1px solid var(--border)',
                                                                 color: 'var(--text-primary)',
                                                                 outline: 'none',
-                                                                height: '24px'
+                                                                height: '28px'
                                                             }}
                                                         />
                                                     </div>
