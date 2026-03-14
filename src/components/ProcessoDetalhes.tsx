@@ -5,6 +5,7 @@ import { Processo, calcularRisco, RISCO_LABELS, FluxoEtapa } from '@/lib/types';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { useCadastros, TipoAssunto } from '@/hooks/useCadastros';
 import { useProcessos } from '@/hooks/useProcessos';
+import { useRotinas } from '@/hooks/useRotinas';
 import { supabase } from '@/lib/supabase';
 
 interface Props {
@@ -15,7 +16,14 @@ interface Props {
 
 export default function ProcessoDetalhes({ item, onBack, showBackButton = false }: Props) {
     const { statusAtivos, cadastros, vincularEtapaAoStatus, vincularResponsavelAEtapa, executoresAtivos } = useCadastros();
-    const { atualizarProcesso } = useProcessos();
+    const { atualizarProcesso, processos } = useProcessos();
+    const { atualizarRotina, rotinas } = useRotinas();
+
+    const isRotina = useMemo(() => {
+        if (item.recorrente) return true;
+        // Fallback: verificar se o ID existe na lista de rotinas
+        return rotinas.some(r => r.id === item.id) && !processos.some(p => p.id === item.id);
+    }, [item, rotinas, processos]);
 
     const [draggingEtapaId, setDraggingEtapaId] = useState<string | null>(null);
     const [dragOverStatus, setDragOverStatus] = useState<string | null>(null);
@@ -43,7 +51,11 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
         }
 
         try {
-            await atualizarProcesso(item.id, { checklist: newChecklist });
+            if (isRotina) {
+                await atualizarRotina(item.id, { checklist: newChecklist });
+            } else {
+                await atualizarProcesso(item.id, { checklist: newChecklist });
+            }
         } catch (error) {
             console.error("Erro ao atualizar checklist:", error);
         }
@@ -182,31 +194,7 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
                                                     </div>
                                                 </div>
 
-                                                {/* Seletor de Responsável por Etapa */}
-                                                <div style={{ marginBottom: '12px' }}>
-                                                    <select 
-                                                        value={etapa.responsavel_nome || ''}
-                                                        onChange={(e) => vincularResponsavelAEtapa(etapa.id, e.target.value || null)}
-                                                        style={{
-                                                            width: '100%',
-                                                            fontSize: '11px',
-                                                            padding: '4px 6px',
-                                                            borderRadius: '6px',
-                                                            background: 'var(--bg-primary)',
-                                                            border: '1px solid var(--border)',
-                                                            color: etapa.responsavel_nome ? 'var(--text-primary)' : 'var(--text-muted)',
-                                                            outline: 'none'
-                                                        }}
-                                                        onClick={(e) => e.stopPropagation()}
-                                                    >
-                                                        <option value="">👤 Responsável...</option>
-                                                        {executoresAtivos.map(res => (
-                                                            <option key={res.id} value={res.nome}>{res.nome}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '12px' }}>
                                                     {etapa.sub_etapas?.map((sub, sIdx) => {
                                                         const isDone = !!item.checklist?.[`${etapa.nome}: ${sub}`];
                                                         return (
@@ -253,6 +241,30 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
                                                             </div>
                                                         );
                                                     })}
+                                                </div>
+
+                                                {/* Seletor de Responsável por Etapa - Agora ABAIXO das sub-etapas */}
+                                                <div>
+                                                    <select 
+                                                        value={etapa.responsavel_nome || ''}
+                                                        onChange={(e) => vincularResponsavelAEtapa(etapa.id, e.target.value || null)}
+                                                        style={{
+                                                            width: '100%',
+                                                            fontSize: '11px',
+                                                            padding: '4px 6px',
+                                                            borderRadius: '6px',
+                                                            background: 'var(--bg-primary)',
+                                                            border: '1px solid var(--border)',
+                                                            color: etapa.responsavel_nome ? 'var(--text-primary)' : 'var(--text-muted)',
+                                                            outline: 'none'
+                                                        }}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        <option value="">👤 Responsável...</option>
+                                                        {executoresAtivos.map(res => (
+                                                            <option key={res.id} value={res.nome}>{res.nome}</option>
+                                                        ))}
+                                                    </select>
                                                 </div>
                                             </div>
                                         ))
