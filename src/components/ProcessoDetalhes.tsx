@@ -154,7 +154,9 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
                         ) : (
                             <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Nenhum marco registrado até o momento.</p>
                         )}
-                      {/* FLUXO DE TRABALHO ESTIPULADO */}
+                    </div>
+
+                    {/* FLUXO DE TRABALHO ESTIPULADO */}
                     {etapas.length > 0 && (
                         <div style={{ background: 'var(--bg-secondary)', padding: '24px', borderRadius: '20px', border: '1px solid var(--border)' }}>
                             <h3 style={{ fontSize: '18px', marginBottom: '16px' }}>🌊 Fluxo de Trabalho e Checklists</h3>
@@ -207,8 +209,6 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
                                 ))}
                             </div>
                         </div>
-                    )}
- </div>
                     )}
                 </div>
 
