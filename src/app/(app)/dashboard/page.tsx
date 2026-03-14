@@ -108,28 +108,6 @@ export default function DashboardPage() {
                     </p>
                 </div>
 
-                <div className="risk-config-panel">
-                    <div className="risk-config-item">
-                        <label>Limiar Crítico (dias)</label>
-                        <input 
-                            type="number" 
-                            value={thresholdCritico} 
-                            onChange={(e) => updateConfig('prazo_critico', e.target.value)}
-                            min="1"
-                            max="30"
-                        />
-                    </div>
-                    <div className="risk-config-item">
-                        <label>Limiar Atenção (dias)</label>
-                        <input 
-                            type="number" 
-                            value={thresholdAtencao} 
-                            onChange={(e) => updateConfig('prazo_atencao', e.target.value)}
-                            min="1"
-                            max="60"
-                        />
-                    </div>
-                </div>
             </div>
 
             <div className="page-body">
@@ -151,13 +129,29 @@ export default function DashboardPage() {
                         <span className="kpi-icon">⚠️</span>
                         <div className="kpi-label">Atenção</div>
                         <div className="kpi-value">{stats.atencao}</div>
-                        <div className="kpi-change">prazo de {thresholdCritico + 1} a {thresholdAtencao} dias</div>
+                        <div className="kpi-change">
+                            prazo de {thresholdCritico + 1} a 
+                            <input 
+                                type="number" 
+                                className="kpi-input"
+                                value={thresholdAtencao} 
+                                onChange={(e) => updateConfig('prazo_atencao', e.target.value)}
+                            /> dias
+                        </div>
                     </div>
                     <div className="kpi-card" style={{ '--kpi-color': 'var(--accent-red)' } as React.CSSProperties}>
                         <span className="kpi-icon">🚨</span>
                         <div className="kpi-label">Críticos</div>
                         <div className="kpi-value">{stats.criticos}</div>
-                        <div className="kpi-change">prazo até {thresholdCritico} dias</div>
+                        <div className="kpi-change">
+                            prazo até 
+                            <input 
+                                type="number" 
+                                className="kpi-input"
+                                value={thresholdCritico} 
+                                onChange={(e) => updateConfig('prazo_critico', e.target.value)}
+                            /> dias
+                        </div>
                     </div>
                     <div className="kpi-card" style={{ '--kpi-color': '#991b1b' } as React.CSSProperties}>
                         <span className="kpi-icon">🛑</span>

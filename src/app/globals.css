@@ -479,44 +479,37 @@ body {
   border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
-.risk-config-panel {
-    display: flex;
-    gap: 20px;
-    background: var(--bg-card);
-    padding: 10px 20px;
-    border-radius: 12px;
-    border: 1px solid var(--border-color);
-    margin-left: auto;
-}
-
-.risk-config-item {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.risk-config-item label {
+.kpi-change {
     font-size: 11px;
     color: var(--text-secondary);
-    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    justify-content: center;
 }
 
-.risk-config-item input {
-    background: var(--bg-body);
-    border: 1px solid var(--border-color);
+.kpi-input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     color: var(--text-primary);
-    border-radius: 6px;
-    padding: 4px 8px;
-    width: 60px;
-    font-size: 13px;
+    border-radius: 4px;
+    padding: 0 4px;
+    width: 35px;
+    font-size: 11px;
     font-weight: 600;
+    text-align: center;
     outline: none;
     transition: all 0.2s;
 }
 
-.risk-config-item input:focus {
+.kpi-input:focus {
+    background: rgba(255, 255, 255, 0.1);
     border-color: var(--accent-purple);
-    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+/* Remover o painel superior antigo se necessário */
+.risk-config-panel {
+    display: none;
 }
 
 .badge-risco-vencido {
