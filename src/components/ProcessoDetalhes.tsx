@@ -15,7 +15,7 @@ interface Props {
 }
 
 export default function ProcessoDetalhes({ item, onBack, showBackButton = false }: Props) {
-    const { statusAtivos, cadastros, vincularEtapaAoStatus, vincularResponsavelAEtapa, executoresAtivos } = useCadastros();
+    const { statusAtivos, cadastros, vincularEtapaAoStatus, vincularResponsavelAEtapa, vincularDatasAEtapa, executoresAtivos } = useCadastros();
     const { atualizarProcesso, processos } = useProcessos();
     const { atualizarRotina, rotinas } = useRotinas();
 
@@ -38,17 +38,25 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
     }, [item, cadastros]);
 
     // Função de toggle melhorada para garantir reatividade e ordenação de chaves
+    const [checklistLocal, setChecklistLocal] = useState<Record<string, boolean>>(item.checklist || {});
+
+    // Sincroniza estado local se o item mudar externamente
+    React.useEffect(() => {
+        setChecklistLocal(item.checklist || {});
+    }, [item.checklist]);
+
     const toggleSubEtapa = async (etapaNome: string, subEtapaNome: string) => {
         const key = `${etapaNome}: ${subEtapaNome}`;
-        const currentChecklist = item.checklist || {};
-        const newChecklist = { ...currentChecklist };
+        const newChecklist = { ...checklistLocal };
         
-        // Inverte o estado ou remove se for falso (para limpar o JSON)
         if (newChecklist[key]) {
             delete newChecklist[key];
         } else {
             newChecklist[key] = true;
         }
+
+        // Atualização otimista do estado local
+        setChecklistLocal(newChecklist);
 
         try {
             if (isRotina) {
@@ -58,6 +66,8 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
             }
         } catch (error) {
             console.error("Erro ao atualizar checklist:", error);
+            // Reverte em caso de erro
+            setChecklistLocal(checklistLocal);
         }
     };
 
@@ -196,7 +206,7 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
 
                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '12px' }}>
                                                     {etapa.sub_etapas?.map((sub, sIdx) => {
-                                                        const isDone = !!item.checklist?.[`${etapa.nome}: ${sub}`];
+                                                        const isDone = !!checklistLocal[`${etapa.nome}: ${sub}`];
                                                         return (
                                                             <div 
                                                                 key={sIdx}
@@ -265,6 +275,48 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
                                                             <option key={res.id} value={res.nome}>{res.nome}</option>
                                                         ))}
                                                     </select>
+                                                </div>
+
+                                                {/* Datas - Novos campos solicitados */}
+                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', marginTop: '6px' }}>
+                                                    <div>
+                                                        <label style={{ fontSize: '9px', color: 'var(--text-muted)', display: 'block', marginBottom: '2px' }}>Início</label>
+                                                        <input 
+                                                            type="date"
+                                                            value={etapa.data_inicio || ''}
+                                                            onChange={(e) => vincularDatasAEtapa(etapa.id, 'data_inicio', e.target.value || null)}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                            style={{
+                                                                width: '100%',
+                                                                fontSize: '10px',
+                                                                padding: '3px 4px',
+                                                                borderRadius: '4px',
+                                                                background: 'var(--bg-primary)',
+                                                                border: '1px solid var(--border)',
+                                                                color: 'var(--text-primary)',
+                                                                outline: 'none'
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label style={{ fontSize: '9px', color: 'var(--text-muted)', display: 'block', marginBottom: '2px' }}>Fim</label>
+                                                        <input 
+                                                            type="date"
+                                                            value={etapa.data_fim || ''}
+                                                            onChange={(e) => vincularDatasAEtapa(etapa.id, 'data_fim', e.target.value || null)}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                            style={{
+                                                                width: '100%',
+                                                                fontSize: '10px',
+                                                                padding: '3px 4px',
+                                                                borderRadius: '4px',
+                                                                background: 'var(--bg-primary)',
+                                                                border: '1px solid var(--border)',
+                                                                color: 'var(--text-primary)',
+                                                                outline: 'none'
+                                                            }}
+                                                        />
+                                                    </div>
                                                 </div>
                                             </div>
                                         ))
