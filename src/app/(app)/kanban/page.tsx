@@ -6,6 +6,7 @@ import { useRotinas } from '@/hooks/useRotinas';
 import { useCadastros } from '@/hooks/useCadastros';
 import ProcessoModal from '@/components/ProcessoModal';
 import RotinaModal from '@/components/RotinaModal';
+import ProcessoViewModal from '@/components/ProcessoViewModal';
 import { Processo, StatusKanban, StatusKanbanDef, calcularRisco, RISCO_LABELS } from '@/lib/types';
 import { differenceInDays, format, parseISO } from 'date-fns';
 
@@ -33,6 +34,8 @@ export default function KanbanPage() {
 
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedProcesso, setSelectedProcesso] = useState<Processo | null>(null);
+    const [viewModalOpen, setViewModalOpen] = useState(false);
+    const [viewingProcesso, setViewingProcesso] = useState<Processo | null>(null);
 
     // Estado do drag & drop
     const dragCardId = useRef<string | null>(null);
@@ -217,7 +220,12 @@ export default function KanbanPage() {
                                                     userSelect: 'none',
                                                     position: 'relative',
                                                 } as React.CSSProperties}
-                                                onClick={() => { if (!isDragging) { window.open(`/processos/${p.id}`, '_blank'); } }}
+                                                onClick={() => { 
+                                                    if (!isDragging) { 
+                                                        setViewingProcesso(p);
+                                                        setViewModalOpen(true);
+                                                    } 
+                                                }}
                                             >
                                                 {/* Botão de Editar no Canto Superior Direito */}
                                                 <button
@@ -343,6 +351,13 @@ export default function KanbanPage() {
                         onDelete={handleDelete}
                     />
                 )
+            )}
+
+            {viewModalOpen && viewingProcesso && (
+                <ProcessoViewModal 
+                    item={viewingProcesso} 
+                    onClose={() => { setViewModalOpen(false); setViewingProcesso(null); }} 
+                />
             )}
         </>
     );
