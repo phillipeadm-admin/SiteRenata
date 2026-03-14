@@ -3,8 +3,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { Processo, DataIntermediaria, calcularRisco, RISCO_LABELS, StatusKanbanDef } from '@/lib/types';
-import { format, parseISO, differenceInDays } from 'date-fns';
+import { Processo } from '@/lib/types';
 import ProcessoDetalhes from '@/components/ProcessoDetalhes';
 
 export default function ProcessoDetalhesPage() {
@@ -12,8 +11,6 @@ export default function ProcessoDetalhesPage() {
     const router = useRouter();
     const [item, setItem] = useState<Processo | null>(null);
     const [loading, setLoading] = useState(true);
-    const { statusAtivos } = useCadastros();
-
     useEffect(() => {
         async function fetchItem() {
             setLoading(true);
@@ -44,13 +41,8 @@ export default function ProcessoDetalhesPage() {
         if (id) fetchItem();
     }, [id]);
 
-    const risco = useMemo(() => item ? calcularRisco(item.data_prazo, item.status_kanban) : 'no_prazo', [item]);
-    const leadTime = item ? differenceInDays(new Date(), parseISO(item.data_entrada)) : 0;
-
     if (loading) return <div className="loading-container" style={{ padding: '40px', color: 'var(--text-secondary)' }}>⏳ Carregando fluxo...</div>;
     if (!item) return <div style={{ padding: '40px' }}>Item não encontrado.</div>;
-
-    const currentStatusIdx = statusAtivos.findIndex(s => s.nome === item.status_kanban);
 
     return (
         <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '20px' }}>
