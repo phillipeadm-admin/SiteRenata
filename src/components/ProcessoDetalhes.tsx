@@ -4,6 +4,8 @@ import React, { useMemo } from 'react';
 import { Processo, calcularRisco, RISCO_LABELS, FluxoEtapa } from '@/lib/types';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { useCadastros, TipoAssunto } from '@/hooks/useCadastros';
+import { useProcessos } from '@/hooks/useProcessos';
+import { supabase } from '@/lib/supabase';
 
 interface Props {
     item: Processo;
@@ -13,6 +15,7 @@ interface Props {
 
 export default function ProcessoDetalhes({ item, onBack, showBackButton = false }: Props) {
     const { statusAtivos, cadastros } = useCadastros();
+    const { atualizarProcesso } = useProcessos();
 
     const etapas = useMemo(() => {
         if (!item || !cadastros.tiposAssunto.length) return [];
@@ -24,8 +27,19 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
     }, [item, cadastros]);
 
     const leadTime = item ? differenceInDays(new Date(), parseISO(item.data_entrada)) : 0;
-
     const currentStatusIdx = statusAtivos.findIndex(s => s.nome === item.status_kanban);
+
+    const toggleSubEtapa = async (etapaNome: string, subEtapaNome: string) => {
+        const key = `${etapaNome}: ${subEtapaNome}`;
+        const newChecklist = { ...(item.checklist || {}) };
+        newChecklist[key] = !newChecklist[key];
+
+        try {
+            await atualizarProcesso(item.id, { checklist: newChecklist });
+        } catch (error) {
+            console.error("Erro ao atualizar checklist:", error);
+        }
+    };
 
     return (
         <div className="processo-detalhes-container">
@@ -115,78 +129,17 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
                 </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr minmax(300px, 340px)', gap: '24px' }}>
-                {/* Coluna Principal */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                    {/* Assunto e Observações */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                {/* Info Rápida e Cabeçalho de Descrição */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '24px' }}>
                     <div style={{ background: 'var(--bg-secondary)', padding: '24px', borderRadius: '20px', border: '1px solid var(--border)' }}>
                         <h3 style={{ fontSize: '18px', marginBottom: '16px' }}>📝 Descrição e Contexto</h3>
-                        <p style={{ fontSize: '16px', fontWeight: 500, color: 'var(--text-primary)', marginBottom: '16px' }}>{item.assunto}</p>
+                        <p style={{ fontSize: '16px', fontWeight: 500, color: 'var(--text-primary)', marginBottom: '12px' }}>{item.assunto}</p>
                         <div style={{ padding: '16px', background: 'var(--bg-primary)', borderRadius: '12px', border: '1px solid var(--border)', color: 'var(--text-muted)', fontSize: '14px', whiteSpace: 'pre-wrap' }}>
                             {item.observacoes || 'Nenhuma observação adicional.'}
                         </div>
                     </div>
 
-
-                    {/* FLUXO DE TRABALHO ESTIPULADO */}
-                    {etapas.length > 0 && (
-                        <div style={{ background: 'var(--bg-secondary)', padding: '24px', borderRadius: '20px', border: '1px solid var(--border)' }}>
-                            <h3 style={{ fontSize: '18px', marginBottom: '16px' }}>🌊 Fluxo de Trabalho e Checklists</h3>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                {etapas.map((etapa, idx) => (
-                                    <div key={etapa.id} style={{ 
-                                        padding: '16px',
-                                        background: 'var(--bg-primary)',
-                                        borderRadius: '16px',
-                                        border: '1px solid var(--border)'
-                                    }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: (etapa.sub_etapas && etapa.sub_etapas.length > 0) ? '12px' : 0 }}>
-                                            <div>
-                                                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Etapa {idx + 1}</div>
-                                                <div style={{ fontSize: '16px', fontWeight: 600 }}>{etapa.nome}</div>
-                                            </div>
-                                        </div>
-
-                                        {(etapa.sub_etapas && etapa.sub_etapas.length > 0) && (
-                                            <div style={{ 
-                                                display: 'flex', 
-                                                flexDirection: 'column', 
-                                                gap: '8px',
-                                                padding: '12px',
-                                                background: 'var(--bg-secondary)',
-                                                borderRadius: '12px',
-                                                border: '1px solid var(--border)'
-                                            }}>
-                                                {etapa.sub_etapas.map((sub, sIdx) => (
-                                                    <div key={sIdx} style={{ 
-                                                        display: 'flex', 
-                                                        alignItems: 'center', 
-                                                        gap: '8px',
-                                                        fontSize: '13px',
-                                                        color: 'var(--text-secondary)'
-                                                    }}>
-                                                        <div style={{ 
-                                                            width: '16px', 
-                                                            height: '16px', 
-                                                            borderRadius: '4px', 
-                                                            border: '2px solid var(--border)',
-                                                            flexShrink: 0
-                                                        }} />
-                                                        {sub}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* Coluna Lateral - Info Rápida */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                    {/* Responsáveis */}
                     <div style={{ background: 'var(--bg-secondary)', padding: '20px', borderRadius: '20px', border: '1px solid var(--border)' }}>
                         <h3 style={{ fontSize: '16px', marginBottom: '16px' }}>👥 Responsáveis</h3>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -210,8 +163,100 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
                             </div>
                         </div>
                     </div>
-
                 </div>
+
+                {/* FLUXO EM FORMATO KANBAN (HORIZONTAL) */}
+                {etapas.length > 0 && (
+                    <div style={{ background: 'var(--bg-secondary)', padding: '24px', borderRadius: '24px', border: '1px solid var(--border)', overflow: 'hidden' }}>
+                        <h3 style={{ fontSize: '18px', marginBottom: '20px', paddingLeft: '4px' }}>🌊 Fluxo de Trabalho (Etapas e Checklist)</h3>
+                        
+                        <div style={{ 
+                            display: 'flex', 
+                            gap: '20px', 
+                            overflowX: 'auto', 
+                            paddingBottom: '20px',
+                            minHeight: '200px',
+                            scrollSnapType: 'x mandatory'
+                        }}>
+                            {etapas.map((etapa, idx) => (
+                                <div key={etapa.id} style={{ 
+                                    minWidth: '320px',
+                                    maxWidth: '320px',
+                                    background: 'var(--bg-primary)',
+                                    borderRadius: '20px',
+                                    border: '1px solid var(--border)',
+                                    padding: '20px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '16px',
+                                    scrollSnapAlign: 'start',
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
+                                }}>
+                                    <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: '12px' }}>
+                                        <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--accent-blue)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>
+                                            Etapa {idx + 1}
+                                        </div>
+                                        <div style={{ fontSize: '17px', fontWeight: 700, color: 'var(--text-primary)' }}>{etapa.nome}</div>
+                                    </div>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                        {etapa.sub_etapas && etapa.sub_etapas.length > 0 ? (
+                                            etapa.sub_etapas.map((sub, sIdx) => {
+                                                const isDone = !!item.checklist?.[`${etapa.nome}: ${sub}`];
+                                                return (
+                                                    <div 
+                                                        key={sIdx} 
+                                                        onClick={() => toggleSubEtapa(etapa.nome, sub)}
+                                                        style={{ 
+                                                            display: 'flex', 
+                                                            alignItems: 'center', 
+                                                            gap: '10px',
+                                                            padding: '10px 12px',
+                                                            background: isDone ? 'rgba(16, 185, 129, 0.05)' : 'var(--bg-secondary)',
+                                                            borderRadius: '12px',
+                                                            border: `1px solid ${isDone ? 'rgba(16, 185, 129, 0.2)' : 'var(--border)'}`,
+                                                            cursor: 'pointer',
+                                                            transition: 'all 0.2s',
+                                                            userSelect: 'none'
+                                                        }}
+                                                    >
+                                                        <div style={{ 
+                                                            width: '20px', 
+                                                            height: '20px', 
+                                                            borderRadius: '6px', 
+                                                            border: `2px solid ${isDone ? 'var(--accent-green)' : 'var(--border)'}`,
+                                                            background: isDone ? 'var(--accent-green)' : 'transparent',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            color: 'white',
+                                                            fontSize: '12px',
+                                                            transition: 'all 0.2s'
+                                                        }}>
+                                                            {isDone && '✓'}
+                                                        </div>
+                                                        <span style={{ 
+                                                            fontSize: '14px', 
+                                                            color: isDone ? 'var(--text-muted)' : 'var(--text-secondary)',
+                                                            textDecoration: isDone ? 'line-through' : 'none',
+                                                            fontWeight: isDone ? 400 : 500
+                                                        }}>
+                                                            {sub.startsWith('• ') ? sub.slice(2) : sub}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            })
+                                        ) : (
+                                            <div style={{ fontSize: '13px', color: 'var(--text-muted)', textAlign: 'center', padding: '12px', fontStyle: 'italic' }}>
+                                                Nenhum item de checklist
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

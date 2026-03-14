@@ -270,11 +270,39 @@ export function useCadastros() {
     };
 
     const deleteFluxoEtapa = async (id: string) => {
+        // Busca os dados da etapa antes de excluir para saber o que reordenar
+        const { data: etapaExcluida } = await supabase
+            .from('renata_fluxo_etapas')
+            .select('tipo_assunto_id, ordem')
+            .eq('id', id)
+            .single();
+
         const { error } = await supabase.from('renata_fluxo_etapas').delete().eq('id', id);
+        
         if (error) {
             console.error("Erro ao excluir Etapa de Fluxo:", error);
             alert("Erro ao excluir etapa: " + error.message);
+            return;
         }
+
+        // Se a etapa existia, reordena as próximas
+        if (etapaExcluida) {
+            const { data: subsequentes } = await supabase
+                .from('renata_fluxo_etapas')
+                .select('id, ordem')
+                .eq('tipo_assunto_id', etapaExcluida.tipo_assunto_id)
+                .gt('ordem', etapaExcluida.ordem);
+
+            if (subsequentes && subsequentes.length > 0) {
+                for (const etapa of subsequentes) {
+                    await supabase
+                        .from('renata_fluxo_etapas')
+                        .update({ ordem: etapa.ordem - 1 })
+                        .eq('id', etapa.id);
+                }
+            }
+        }
+
         await fetchCadastros();
     };
 

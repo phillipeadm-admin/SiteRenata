@@ -54,6 +54,7 @@ export interface Processo {
     recorrente?: boolean | null;
     intervalo_dias?: number | null;
     proxima_execucao?: string | null;
+    checklist?: Record<string, boolean> | null;
     created_at: string;
     updated_at: string;
 }
