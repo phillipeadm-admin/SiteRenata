@@ -167,9 +167,11 @@ export default function DashboardPage() {
                                                     ? format(parseISO(p.data_prazo), 'dd/MM/yyyy')
                                                     : 'Sem prazo'}
                                             </td>
-                                            <td>
-                                                <span className="badge badge-risco-critico">⚠️ Crítico</span>
-                                            </td>
+                                             <td>
+                                                 <span className={`badge badge-risco-${calcularRisco(p.data_prazo, p.status_kanban)}`}>
+                                                     {calcularRisco(p.data_prazo, p.status_kanban) === 'vencido' ? '🚨 Vencido' : '⚠️ Crítico'}
+                                                 </span>
+                                             </td>
                                         </tr>
                                     ))}
                                 </tbody>
