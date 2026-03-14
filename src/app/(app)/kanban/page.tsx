@@ -355,7 +355,7 @@ export default function KanbanPage() {
 
             {viewModalOpen && viewingProcesso && (
                 <ProcessoViewModal 
-                    item={viewingProcesso} 
+                    item={todos.find(p => p.id === viewingProcesso.id) || viewingProcesso} 
                     onClose={() => { setViewModalOpen(false); setViewingProcesso(null); }} 
                 />
             )}

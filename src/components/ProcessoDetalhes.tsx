@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Processo, calcularRisco, RISCO_LABELS, FluxoEtapa } from '@/lib/types';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { useCadastros, TipoAssunto } from '@/hooks/useCadastros';
@@ -14,10 +14,13 @@ interface Props {
 }
 
 export default function ProcessoDetalhes({ item, onBack, showBackButton = false }: Props) {
-    const { statusAtivos, cadastros } = useCadastros();
+    const { statusAtivos, cadastros, vincularEtapaAoStatus } = useCadastros();
     const { atualizarProcesso } = useProcessos();
 
-    const etapas = useMemo(() => {
+    const [draggingEtapaId, setDraggingEtapaId] = useState<string | null>(null);
+    const [dragOverStatus, setDragOverStatus] = useState<string | null>(null);
+
+    const etapasRelacionadas = useMemo(() => {
         if (!item || !cadastros.tiposAssunto.length) return [];
         const tipoId = cadastros.tiposAssunto.find((t: TipoAssunto) => t.nome === item.tipo_assunto)?.id;
         if (!tipoId) return [];
@@ -39,6 +42,25 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
         } catch (error) {
             console.error("Erro ao atualizar checklist:", error);
         }
+    };
+
+    const onDragStart = (e: React.DragEvent, id: string) => {
+        setDraggingEtapaId(id);
+        e.dataTransfer.effectAllowed = 'move';
+    };
+
+    const onDragOver = (e: React.DragEvent, status: string) => {
+        e.preventDefault();
+        setDragOverStatus(status);
+    };
+
+    const onDrop = async (e: React.DragEvent, targetStatus: string) => {
+        e.preventDefault();
+        if (draggingEtapaId) {
+            await vincularEtapaAoStatus(draggingEtapaId, targetStatus);
+        }
+        setDraggingEtapaId(null);
+        setDragOverStatus(null);
     };
 
     return (
@@ -166,94 +188,118 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
                 </div>
 
                 {/* FLUXO EM FORMATO KANBAN (HORIZONTAL) */}
-                {etapas.length > 0 && (
+                {etapasRelacionadas.length > 0 && (
                     <div style={{ background: 'var(--bg-secondary)', padding: '24px', borderRadius: '24px', border: '1px solid var(--border)', overflow: 'hidden' }}>
-                        <h3 style={{ fontSize: '18px', marginBottom: '20px', paddingLeft: '4px' }}>🌊 Fluxo de Trabalho (Etapas e Checklist)</h3>
+                        <h3 style={{ fontSize: '18px', marginBottom: '20px', paddingLeft: '4px' }}>🌊 Kanban de Fluxo (Arraste as etapas entre os status)</h3>
                         
                         <div style={{ 
                             display: 'flex', 
                             gap: '20px', 
                             overflowX: 'auto', 
                             paddingBottom: '20px',
-                            minHeight: '200px',
+                            minHeight: '400px',
                             scrollSnapType: 'x mandatory'
                         }}>
-                            {etapas.map((etapa, idx) => (
-                                <div key={etapa.id} style={{ 
-                                    minWidth: '320px',
-                                    maxWidth: '320px',
-                                    background: 'var(--bg-primary)',
-                                    borderRadius: '20px',
-                                    border: '1px solid var(--border)',
-                                    padding: '20px',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: '16px',
-                                    scrollSnapAlign: 'start',
-                                    boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
-                                }}>
-                                    <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: '12px' }}>
-                                        <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--accent-blue)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>
-                                            Etapa {idx + 1}
+                            {statusAtivos.map((statusObj) => {
+                                const status = statusObj.nome;
+                                const etapasNoStatus = etapasRelacionadas.filter(e => {
+                                    if (!e.status_vinculado && statusObj.ordem === 1) return true; // Primeira coluna pega os sem vínculo
+                                    return e.status_vinculado === status;
+                                });
+                                const isOver = dragOverStatus === status;
+                                
+                                return (
+                                    <div 
+                                        key={status} 
+                                        onDragOver={(e) => onDragOver(e, status)}
+                                        onDrop={(e) => onDrop(e, status)}
+                                        style={{ 
+                                            minWidth: '320px',
+                                            maxWidth: '320px',
+                                            background: isOver ? 'var(--bg-secondary)' : 'var(--bg-primary)',
+                                            borderRadius: '20px',
+                                            border: `2px ${isOver ? 'dashed' : 'solid'} ${isOver ? (statusObj.cor || 'var(--accent-blue)') : 'var(--border)'}`,
+                                            padding: '20px',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: '16px',
+                                            scrollSnapAlign: 'start',
+                                            boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+                                            transition: 'all 0.2s'
+                                        }}
+                                    >
+                                        <div style={{ borderBottom: `2px solid ${statusObj.cor || 'var(--accent-blue)'}`, paddingBottom: '12px' }}>
+                                            <div style={{ fontSize: '17px', fontWeight: 700, color: 'var(--text-primary)' }}>{status}</div>
                                         </div>
-                                        <div style={{ fontSize: '17px', fontWeight: 700, color: 'var(--text-primary)' }}>{etapa.nome}</div>
-                                    </div>
 
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                        {etapa.sub_etapas && etapa.sub_etapas.length > 0 ? (
-                                            etapa.sub_etapas.map((sub, sIdx) => {
-                                                const isDone = !!item.checklist?.[`${etapa.nome}: ${sub}`];
-                                                return (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
+                                            {etapasNoStatus.length > 0 ? (
+                                                etapasNoStatus.map((etapa) => (
                                                     <div 
-                                                        key={sIdx} 
-                                                        onClick={() => toggleSubEtapa(etapa.nome, sub)}
+                                                        key={etapa.id} 
+                                                        draggable
+                                                        onDragStart={(e) => onDragStart(e, etapa.id)}
                                                         style={{ 
-                                                            display: 'flex', 
-                                                            alignItems: 'center', 
-                                                            gap: '10px',
-                                                            padding: '10px 12px',
-                                                            background: isDone ? 'rgba(16, 185, 129, 0.05)' : 'var(--bg-secondary)',
-                                                            borderRadius: '12px',
-                                                            border: `1px solid ${isDone ? 'rgba(16, 185, 129, 0.2)' : 'var(--border)'}`,
-                                                            cursor: 'pointer',
-                                                            transition: 'all 0.2s',
-                                                            userSelect: 'none'
+                                                            background: 'var(--bg-secondary)',
+                                                            borderRadius: '16px',
+                                                            border: '1px solid var(--border)',
+                                                            padding: '16px',
+                                                            cursor: 'grab',
+                                                            opacity: draggingEtapaId === etapa.id ? 0.5 : 1
                                                         }}
                                                     >
-                                                        <div style={{ 
-                                                            width: '20px', 
-                                                            height: '20px', 
-                                                            borderRadius: '6px', 
-                                                            border: `2px solid ${isDone ? 'var(--accent-green)' : 'var(--border)'}`,
-                                                            background: isDone ? 'var(--accent-green)' : 'transparent',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center',
-                                                            color: 'white',
-                                                            fontSize: '12px',
-                                                            transition: 'all 0.2s'
-                                                        }}>
-                                                            {isDone && '✓'}
+                                                        <div style={{ fontSize: '14px', fontWeight: 700, marginBottom: '12px', color: 'var(--text-primary)' }}>
+                                                            {etapa.nome}
                                                         </div>
-                                                        <span style={{ 
-                                                            fontSize: '14px', 
-                                                            color: isDone ? 'var(--text-muted)' : 'var(--text-secondary)',
-                                                            textDecoration: isDone ? 'line-through' : 'none',
-                                                            fontWeight: isDone ? 400 : 500
-                                                        }}>
-                                                            {sub.startsWith('• ') ? sub.slice(2) : sub}
-                                                        </span>
+                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                            {etapa.sub_etapas?.map((sub, sIdx) => {
+                                                                const isDone = !!item.checklist?.[`${etapa.nome}: ${sub}`];
+                                                                return (
+                                                                    <div 
+                                                                        key={sIdx}
+                                                                        onClick={(e) => { e.stopPropagation(); toggleSubEtapa(etapa.nome, sub); }}
+                                                                        style={{ 
+                                                                            display: 'flex', 
+                                                                            alignItems: 'center', 
+                                                                            gap: '8px',
+                                                                            fontSize: '13px',
+                                                                            color: isDone ? 'var(--text-muted)' : 'var(--text-secondary)',
+                                                                            cursor: 'pointer',
+                                                                            userSelect: 'none'
+                                                                        }}
+                                                                    >
+                                                                        <div style={{ 
+                                                                            width: '18px', 
+                                                                            height: '18px', 
+                                                                            borderRadius: '5px', 
+                                                                            border: `2px solid ${isDone ? 'var(--accent-green)' : 'var(--border)'}`,
+                                                                            background: isDone ? 'var(--accent-green)' : 'transparent',
+                                                                            display: 'flex',
+                                                                            alignItems: 'center',
+                                                                            justifyContent: 'center',
+                                                                            color: 'white',
+                                                                            fontSize: '11px'
+                                                                        }}>
+                                                                            {isDone && '✓'}
+                                                                        </div>
+                                                                        <span style={{ textDecoration: isDone ? 'line-through' : 'none' }}>
+                                                                            {sub.startsWith('• ') ? sub.slice(2) : sub}
+                                                                        </span>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
                                                     </div>
-                                                );
-                                            })
-                                        ) : (
-                                            <div style={{ fontSize: '13px', color: 'var(--text-muted)', textAlign: 'center', padding: '12px', fontStyle: 'italic' }}>
-                                                Nenhum item de checklist
-                                            </div>
-                                        )}
+                                                ))
+                                            ) : (
+                                                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '13px', fontStyle: 'italic', padding: '20px' }}>
+                                                    Solte etapas aqui
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
                 )}

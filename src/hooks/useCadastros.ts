@@ -306,6 +306,19 @@ export function useCadastros() {
         await fetchCadastros();
     };
 
+    const vincularEtapaAoStatus = async (id: string, status: string | null) => {
+        const { error } = await supabase
+            .from('renata_fluxo_etapas')
+            .update({ status_vinculado: status })
+            .eq('id', id);
+
+        if (error) {
+            console.error("Erro ao vincular etapa ao status:", error);
+            alert("Erro ao salvar vínculo de status: " + error.message);
+        }
+        await fetchCadastros();
+    };
+
     /* Listas filtradas */
     const tiposAtivos: TipoAssunto[] = cadastros.tiposAssunto.filter((t: TipoAssunto) => t.ativo);
     const executoresAtivos: Responsavel[] = cadastros.responsaveis.filter((r: Responsavel) => r.ativo && (r.tipo === 'execucao' || r.tipo === 'ambos'));
@@ -322,6 +335,6 @@ export function useCadastros() {
         addTipo, updateTipo, toggleTipo, deleteTipo,
         addResponsavel, updateResponsavel, toggleResponsavel, deleteResponsavel,
         addStatus, updateStatus, toggleStatus, deleteStatus,
-        addFluxoEtapa, updateFluxoEtapa, deleteFluxoEtapa
+        addFluxoEtapa, updateFluxoEtapa, deleteFluxoEtapa, vincularEtapaAoStatus
     };
 }

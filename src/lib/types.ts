@@ -16,6 +16,7 @@ export interface FluxoEtapa {
     dias_saida: number;
     ordem: number;
     sub_etapas?: string[];
+    status_vinculado?: string | null;
     created_at: string;
 }
 
