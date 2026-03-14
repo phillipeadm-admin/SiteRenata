@@ -23,7 +23,6 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
             .sort((a: FluxoEtapa, b: FluxoEtapa) => a.ordem - b.ordem);
     }, [item, cadastros]);
 
-    const risco = useMemo(() => item ? calcularRisco(item.data_prazo, item.status_kanban) : 'no_prazo', [item]);
     const leadTime = item ? differenceInDays(new Date(), parseISO(item.data_entrada)) : 0;
 
     const currentStatusIdx = statusAtivos.findIndex(s => s.nome === item.status_kanban);
@@ -60,9 +59,6 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
             }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                         <span className={`badge badge-risco-${risco}`} style={{ fontSize: '14px', padding: '6px 12px' }}>
-                            {RISCO_LABELS[risco]}
-                        </span>
                         <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>
                             Há <strong>{leadTime} dias</strong> no fluxo
                         </span>
@@ -131,30 +127,6 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
                         </div>
                     </div>
 
-                    {/* Timeline de Marcos */}
-                    <div style={{ background: 'var(--bg-secondary)', padding: '24px', borderRadius: '20px', border: '1px solid var(--border)' }}>
-                        <h3 style={{ fontSize: '18px', marginBottom: '16px' }}>📅 Linha do Tempo de Marcos (Datas Intermediárias)</h3>
-                        {item.datas_intermediarias && item.datas_intermediarias.length > 0 ? (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                {item.datas_intermediarias.map((d, i) => (
-                                    <div key={i} style={{ 
-                                        display: 'flex', 
-                                        gap: '16px', 
-                                        alignItems: 'flex-start',
-                                        padding: '12px',
-                                        borderLeft: '3px solid var(--accent-blue)',
-                                        background: 'rgba(59, 130, 246, 0.05)',
-                                        borderRadius: '0 12px 12px 0'
-                                    }}>
-                                        <div style={{ fontWeight: 700, whiteSpace: 'nowrap', fontSize: '14px' }}>{format(parseISO(d.data), 'dd/MM/yyyy')}</div>
-                                        <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>{d.justificativa}</div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Nenhum marco registrado até o momento.</p>
-                        )}
-                    </div>
 
                     {/* FLUXO DE TRABALHO ESTIPULADO */}
                     {etapas.length > 0 && (
@@ -177,8 +149,8 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
 
                                         {(etapa.sub_etapas && etapa.sub_etapas.length > 0) && (
                                             <div style={{ 
-                                                display: 'grid', 
-                                                gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', 
+                                                display: 'flex', 
+                                                flexDirection: 'column', 
                                                 gap: '8px',
                                                 padding: '12px',
                                                 background: 'var(--bg-secondary)',
@@ -239,34 +211,6 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
                         </div>
                     </div>
 
-                    {/* Datas Importantes */}
-                    <div style={{ background: 'var(--bg-secondary)', padding: '20px', borderRadius: '20px', border: '1px solid var(--border)' }}>
-                        <h3 style={{ fontSize: '16px', marginBottom: '16px' }}>🗓️ Prazos e Datas</h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                                <span style={{ color: 'var(--text-muted)' }}>Criação:</span>
-                                <span style={{ fontWeight: 600 }}>{format(parseISO(item.data_entrada), 'dd/MM/yyyy')}</span>
-                            </div>
-                            {item.data_prazo && (
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                                    <span style={{ color: 'var(--text-muted)' }}>Prazo Final:</span>
-                                    <span style={{ fontWeight: 600, color: risco === 'critico' ? 'var(--accent-red)' : 'inherit' }}>{format(parseISO(item.data_prazo), 'dd/MM/yyyy')}</span>
-                                </div>
-                            )}
-                            {item.data_finalizacao && (
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                                    <span style={{ color: 'var(--text-muted)' }}>Concluído em:</span>
-                                    <span style={{ fontWeight: 600, color: 'var(--accent-green)' }}>{format(parseISO(item.data_finalizacao), 'dd/MM/yyyy')}</span>
-                                </div>
-                            )}
-                            {item.proxima_execucao && (
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', paddingTop: '8px', borderTop: '1px solid var(--border)' }}>
-                                    <span style={{ color: 'var(--text-muted)' }}>Próxima Rotina:</span>
-                                    <span style={{ fontWeight: 600, color: 'var(--accent-cyan)' }}>{format(parseISO(item.proxima_execucao), 'dd/MM/yyyy')}</span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>

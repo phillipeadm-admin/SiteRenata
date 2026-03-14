@@ -754,7 +754,7 @@ export default function CadastrosPage() {
                                             ➕
                                         </button>
                                     </div>
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                         {novaEtapa.sub_etapas.map((sub, idx) => (
                                             <span key={idx} className="badge" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                                 {sub}
@@ -831,7 +831,7 @@ export default function CadastrosPage() {
                                                                         }}
                                                                     />
                                                                 </div>
-                                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                                                     {(editEtapa.sub_etapas || []).map((sub, idx) => (
                                                                         <span key={idx} className="badge" style={{ fontSize: '11px' }}>
                                                                             {sub}
@@ -846,7 +846,7 @@ export default function CadastrosPage() {
                                                         ) : (
                                                             <div>
                                                                 <div style={{ fontWeight: 500 }}>{etapa.nome}</div>
-                                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
+                                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
                                                                     {(etapa.sub_etapas || []).map((sub, idx) => (
                                                                         <span key={idx} className="badge" style={{ fontSize: '10px', opacity: 0.8 }}>{sub}</span>
                                                                     ))}
