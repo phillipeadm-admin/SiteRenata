@@ -65,12 +65,13 @@ export default function RotinaModal({ rotina, onSave, onClose, onDelete }: Props
         const datasValidas = datasInter.filter((d: DataIntermediaria) => d.data.trim() !== '');
         await onSave({
             ...form,
-            data_prazo: form.data_prazo || undefined,
+            data_prazo: form.data_prazo || null,
+            proxima_execucao: form.proxima_execucao || null,
             responsavel_execucao: responsaveisExec.join(', ') || undefined,
-            responsavel_revisao: responsaveisRev.join(', ') || undefined,
+            responsavel_revisao: responsaveisRev.join(', ') || null,
             numero_processo: undefined, // Rotinas não têm número de processo
-            observacoes: form.observacoes || undefined,
-            datas_intermediarias: datasValidas.length > 0 ? datasValidas : undefined,
+            observacoes: form.observacoes || null,
+            datas_intermediarias: datasValidas.length > 0 ? datasValidas : null,
             recorrente: form.recorrente,
         });
         setLoading(false);
