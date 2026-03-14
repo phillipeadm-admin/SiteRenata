@@ -1,19 +1,24 @@
 'use client';
 
 import { useState } from 'react';
-import { useCadastros, Responsavel } from '@/hooks/useCadastros';
+import { useSearchParams } from 'next/navigation';
+import { useCadastros, Responsavel, TipoAssunto } from '@/hooks/useCadastros';
+import { FluxoEtapa, StatusKanbanDef } from '@/lib/types';
 
-type Aba = 'tipos' | 'responsaveis' | 'status';
+type Aba = 'tipos' | 'responsaveis' | 'status' | 'fluxo';
 
 export default function CadastrosPage() {
     const {
         cadastros, statusAtivos,
         addTipo, updateTipo, deleteTipo,
         addResponsavel, updateResponsavel, deleteResponsavel,
-        addStatus, updateStatus, deleteStatus
+        addStatus, updateStatus, deleteStatus,
+        addFluxoEtapa, updateFluxoEtapa, deleteFluxoEtapa
     } = useCadastros();
 
-    const [aba, setAba] = useState<Aba>('tipos');
+    const searchParams = useSearchParams();
+    const abaParam = searchParams.get('aba') as Aba;
+    const [aba, setAba] = useState<Aba>(abaParam || 'tipos');
 
     /* ---- Estados de edição e confirmação de exclusão ---- */
     const [novoTipo, setNovoTipo] = useState({ nome: '', responsavel_execucao: '', responsavel_revisao: '' });
@@ -30,6 +35,12 @@ export default function CadastrosPage() {
     const [editStatusId, setEditStatusId] = useState<string | null>(null);
     const [editStatus, setEditStatus] = useState({ nome: '', cor: '#6366f1', ordem: 1 });
     const [deleteStatusId, setDeleteStatusId] = useState<string | null>(null);
+
+    const [tipoFluxoId, setTipoFluxoId] = useState<string>('');
+    const [novaEtapa, setNovaEtapa] = useState({ nome: '', dias_entrada: 0, dias_saida: 1, ordem: 1 });
+    const [editEtapaId, setEditEtapaId] = useState<string | null>(null);
+    const [editEtapa, setEditEtapa] = useState({ nome: '', dias_entrada: 0, dias_saida: 1, ordem: 1 });
+    const [deleteEtapaId, setDeleteEtapaId] = useState<string | null>(null);
 
     const responsaveisDaAba = cadastros.responsaveis;
     const statusOrdenados = [...cadastros.statusKanban].sort((a, b) => a.ordem - b.ordem);
@@ -50,6 +61,7 @@ export default function CadastrosPage() {
                         { key: 'tipos', label: '📂 Processo e Rotina' },
                         { key: 'responsaveis', label: '👤 Responsáveis' },
                         { key: 'status', label: '📊 Kanban' },
+                        { key: 'fluxo', label: '🌊 Fluxo' },
                     ] as { key: Aba; label: string }[]).map(tab => (
                         <button
                             key={tab.key}
@@ -647,6 +659,196 @@ export default function CadastrosPage() {
                                 </tbody>
                             </table>
                         </div>
+                    </div>
+                )}
+                {/* ===== ABA: FLUXO ===== */}
+                {aba === 'fluxo' && (
+                    <div className="card">
+                        <div className="card-header">
+                            <h2 className="card-title">🌊 Configuração de Fluxo de Trabalho</h2>
+                            <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Defina as etapas padrão para cada tipo de processo</p>
+                        </div>
+
+                        <div className="form-group" style={{ padding: '0 16px', marginBottom: '16px' }}>
+                            <label className="form-label">Selecionar Tipo de Processo / Rotina</label>
+                            <select 
+                                className="form-select" 
+                                value={tipoFluxoId}
+                                onChange={(e) => setTipoFluxoId(e.target.value)}
+                            >
+                                <option value="">— Selecione um tipo para editar o fluxo —</option>
+                                {cadastros.tiposAssunto.map(t => (
+                                    <option key={t.id} value={t.id}>{t.nome}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {tipoFluxoId && (
+                            <>
+                                <div style={{
+                                    display: 'grid', gridTemplateColumns: '1fr 100px 100px 100px auto', gap: '10px',
+                                    marginBottom: '20px', padding: '16px',
+                                    background: 'var(--bg-secondary)', borderRadius: '12px',
+                                    border: '1px solid var(--border)', alignItems: 'flex-end'
+                                }}>
+                                    <div className="form-group">
+                                        <label className="form-label">Nome da Etapa</label>
+                                        <input
+                                            className="form-input"
+                                            placeholder="Ex: Análise Inicial"
+                                            value={novaEtapa.nome}
+                                            onChange={e => setNovaEtapa({ ...novaEtapa, nome: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">D+ Entrada</label>
+                                        <input
+                                            className="form-input"
+                                            type="number"
+                                            value={novaEtapa.dias_entrada}
+                                            onChange={e => setNovaEtapa({ ...novaEtapa, dias_entrada: parseInt(e.target.value) || 0 })}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">D+ Saída</label>
+                                        <input
+                                            className="form-input"
+                                            type="number"
+                                            value={novaEtapa.dias_saida}
+                                            onChange={e => setNovaEtapa({ ...novaEtapa, dias_saida: parseInt(e.target.value) || 0 })}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">Ordem</label>
+                                        <input
+                                            className="form-input"
+                                            type="number"
+                                            value={novaEtapa.ordem}
+                                            onChange={e => setNovaEtapa({ ...novaEtapa, ordem: parseInt(e.target.value) || 1 })}
+                                        />
+                                    </div>
+                                    <button
+                                        className="btn btn-primary"
+                                        disabled={!novaEtapa.nome.trim()}
+                                        onClick={async () => {
+                                            await addFluxoEtapa(tipoFluxoId, novaEtapa.nome, novaEtapa.dias_entrada, novaEtapa.dias_saida, novaEtapa.ordem);
+                                            setNovaEtapa({ nome: '', dias_entrada: 0, dias_saida: 1, ordem: novaEtapa.ordem + 1 });
+                                        }}
+                                    >
+                                        ✅ Adicionar
+                                    </button>
+                                </div>
+
+                                <div className="table-wrapper">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Ordem</th>
+                                                <th>Etapa</th>
+                                                <th>Entrada (D+)</th>
+                                                <th>Saída (D+)</th>
+                                                <th style={{ textAlign: 'right', width: '250px' }}>Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {cadastros.fluxoEtapas.filter(e => e.tipo_assunto_id === tipoFluxoId).length === 0 && (
+                                                <tr>
+                                                    <td colSpan={5}>
+                                                        <div className="empty-state">
+                                                            <div className="empty-state-icon">🌊</div>
+                                                            <div className="empty-state-text">Nenhuma etapa configurada para este fluxo</div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )}
+                                            {cadastros.fluxoEtapas
+                                                .filter(e => e.tipo_assunto_id === tipoFluxoId)
+                                                .sort((a, b) => a.ordem - b.ordem)
+                                                .map(etapa => (
+                                                <tr key={etapa.id}>
+                                                    <td>
+                                                        {editEtapaId === etapa.id ? (
+                                                            <input
+                                                                className="form-input"
+                                                                type="number"
+                                                                style={{ width: '60px' }}
+                                                                value={editEtapa.ordem}
+                                                                onChange={e => setEditEtapa({ ...editEtapa, ordem: parseInt(e.target.value) || 1 })}
+                                                            />
+                                                        ) : (
+                                                            <span>{etapa.ordem}</span>
+                                                        )}
+                                                    </td>
+                                                    <td>
+                                                        {editEtapaId === etapa.id ? (
+                                                            <input
+                                                                className="form-input"
+                                                                value={editEtapa.nome}
+                                                                onChange={e => setEditEtapa({ ...editEtapa, nome: e.target.value })}
+                                                            />
+                                                        ) : (
+                                                            <span style={{ fontWeight: 500 }}>{etapa.nome}</span>
+                                                        )}
+                                                    </td>
+                                                    <td>
+                                                        {editEtapaId === etapa.id ? (
+                                                            <input
+                                                                className="form-input"
+                                                                type="number"
+                                                                style={{ width: '80px' }}
+                                                                value={editEtapa.dias_entrada}
+                                                                onChange={e => setEditEtapa({ ...editEtapa, dias_entrada: parseInt(e.target.value) || 0 })}
+                                                            />
+                                                        ) : (
+                                                            <span>D + {etapa.dias_entrada}</span>
+                                                        )}
+                                                    </td>
+                                                    <td>
+                                                        {editEtapaId === etapa.id ? (
+                                                            <input
+                                                                className="form-input"
+                                                                type="number"
+                                                                style={{ width: '80px' }}
+                                                                value={editEtapa.dias_saida}
+                                                                onChange={e => setEditEtapa({ ...editEtapa, dias_saida: parseInt(e.target.value) || 0 })}
+                                                            />
+                                                        ) : (
+                                                            <span>D + {etapa.dias_saida}</span>
+                                                        )}
+                                                    </td>
+                                                    <td>
+                                                        <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                                                            {deleteEtapaId === etapa.id ? (
+                                                                <>
+                                                                    <button className="btn btn-danger btn-sm" onClick={() => { deleteFluxoEtapa(etapa.id); setDeleteEtapaId(null); }}>✓</button>
+                                                                    <button className="btn btn-secondary btn-sm" onClick={() => setDeleteEtapaId(null)}>✕</button>
+                                                                </>
+                                                            ) : editEtapaId === etapa.id ? (
+                                                                <>
+                                                                    <button className="btn btn-primary btn-sm" onClick={() => { 
+                                                                        updateFluxoEtapa(etapa.id, editEtapa.nome, editEtapa.dias_entrada, editEtapa.dias_saida, editEtapa.ordem); 
+                                                                        setEditEtapaId(null); 
+                                                                    }}>💾</button>
+                                                                    <button className="btn btn-secondary btn-sm" onClick={() => setEditEtapaId(null)}>✕</button>
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <button className="btn btn-secondary btn-sm" onClick={() => {
+                                                                        setEditEtapaId(etapa.id);
+                                                                        setEditEtapa({ nome: etapa.nome, dias_entrada: etapa.dias_entrada, dias_saida: etapa.dias_saida, ordem: etapa.ordem });
+                                                                    }}>✏️</button>
+                                                                    <button className="btn btn-danger btn-sm" onClick={() => setDeleteEtapaId(etapa.id)}>🗑️</button>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </>
+                        )}
                     </div>
                 )}
             </div>

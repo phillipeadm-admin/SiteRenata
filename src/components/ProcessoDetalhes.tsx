@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { Processo, calcularRisco, RISCO_LABELS } from '@/lib/types';
+import { Processo, calcularRisco, RISCO_LABELS, FluxoEtapa } from '@/lib/types';
 import { format, parseISO, differenceInDays } from 'date-fns';
-import { useCadastros } from '@/hooks/useCadastros';
+import { useCadastros, TipoAssunto } from '@/hooks/useCadastros';
 
 interface Props {
     item: Processo;
@@ -12,7 +12,16 @@ interface Props {
 }
 
 export default function ProcessoDetalhes({ item, onBack, showBackButton = false }: Props) {
-    const { statusAtivos } = useCadastros();
+    const { statusAtivos, cadastros } = useCadastros();
+
+    const etapas = useMemo(() => {
+        if (!item || !cadastros.tiposAssunto.length) return [];
+        const tipoId = cadastros.tiposAssunto.find((t: TipoAssunto) => t.nome === item.tipo_assunto)?.id;
+        if (!tipoId) return [];
+        return cadastros.fluxoEtapas
+            .filter((e: FluxoEtapa) => e.tipo_assunto_id === tipoId)
+            .sort((a: FluxoEtapa, b: FluxoEtapa) => a.ordem - b.ordem);
+    }, [item, cadastros]);
 
     const risco = useMemo(() => item ? calcularRisco(item.data_prazo, item.status_kanban) : 'no_prazo', [item]);
     const leadTime = item ? differenceInDays(new Date(), parseISO(item.data_entrada)) : 0;
@@ -146,6 +155,55 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
                             <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Nenhum marco registrado até o momento.</p>
                         )}
                     </div>
+
+                    {/* FLUXO DE TRABALHO ESTIPULADO */}
+                    {etapas.length > 0 && (
+                        <div style={{ background: 'var(--bg-secondary)', padding: '24px', borderRadius: '20px', border: '1px solid var(--border)' }}>
+                            <h3 style={{ fontSize: '18px', marginBottom: '16px' }}>🌊 Fluxo de Trabalho Estipulado</h3>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                {etapas.map((etapa, idx) => {
+                                    const dataEntradaRaw = parseISO(item.data_entrada);
+                                    const dataInicio = new Date(dataEntradaRaw);
+                                    dataInicio.setDate(dataInicio.getDate() + etapa.dias_entrada);
+                                    
+                                    const dataFim = new Date(dataEntradaRaw);
+                                    dataFim.setDate(dataFim.getDate() + etapa.dias_saida);
+
+                                    return (
+                                        <div key={etapa.id} style={{ 
+                                            display: 'grid',
+                                            gridTemplateColumns: '120px 1fr 120px',
+                                            alignItems: 'center',
+                                            gap: '16px',
+                                            padding: '16px',
+                                            background: 'var(--bg-primary)',
+                                            borderRadius: '16px',
+                                            border: '1px solid var(--border)'
+                                        }}>
+                                            <div style={{ textAlign: 'center' }}>
+                                                <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Início</div>
+                                                <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--accent-blue)' }}>
+                                                    {format(dataInicio, 'dd/MM/yyyy')}
+                                                </div>
+                                            </div>
+                                            
+                                            <div style={{ borderLeft: '1px solid var(--border)', borderRight: '1px solid var(--border)', padding: '0 16px' }}>
+                                                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Etapa {idx + 1}</div>
+                                                <div style={{ fontSize: '15px', fontWeight: 600 }}>{etapa.nome}</div>
+                                            </div>
+
+                                            <div style={{ textAlign: 'center' }}>
+                                                <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Saída</div>
+                                                <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--accent-purple)' }}>
+                                                    {format(dataFim, 'dd/MM/yyyy')}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Coluna Lateral - Info Rápida */}

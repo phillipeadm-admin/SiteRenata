@@ -8,6 +8,16 @@ export interface StatusKanbanDef {
     ativo: boolean;
 }
 
+export interface FluxoEtapa {
+    id: string;
+    tipo_assunto_id: string;
+    nome: string;
+    dias_entrada: number;
+    dias_saida: number;
+    ordem: number;
+    created_at: string;
+}
+
 export type RiscoStatus = 'no_prazo' | 'atencao' | 'critico' | 'finalizado';
 
 export interface Usuario {
