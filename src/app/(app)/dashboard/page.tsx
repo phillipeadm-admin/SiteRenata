@@ -25,7 +25,10 @@ export default function DashboardPage() {
         const total = todos.length;
         const finalizados = todos.filter(p => p.status_kanban === 'finalizado').length;
         const emExecucao = todos.filter(p => p.status_kanban === 'em_execucao').length;
-        const criticos = todos.filter(p => calcularRisco(p.data_prazo, p.status_kanban) === 'critico').length;
+        const criticos = todos.filter(p => {
+            const risco = calcularRisco(p.data_prazo, p.status_kanban);
+            return risco === 'critico' || risco === 'vencido';
+        }).length;
         const atencao = todos.filter(p => calcularRisco(p.data_prazo, p.status_kanban) === 'atencao').length;
 
         const leadTimes = todos
@@ -60,7 +63,10 @@ export default function DashboardPage() {
 
     const processosCriticos = useMemo(() =>
         todos
-            .filter(p => calcularRisco(p.data_prazo, p.status_kanban) === 'critico')
+            .filter(p => {
+                const risco = calcularRisco(p.data_prazo, p.status_kanban);
+                return risco === 'critico' || risco === 'vencido';
+            })
             .sort((a, b) => (a.data_prazo ?? '').localeCompare(b.data_prazo ?? '')),
         [todos]
     );

@@ -7,7 +7,7 @@ import { useCadastros } from '@/hooks/useCadastros';
 import ProcessoModal from '@/components/ProcessoModal';
 import RotinaModal from '@/components/RotinaModal';
 import ProcessoViewModal from '@/components/ProcessoViewModal';
-import { Processo, StatusKanban, StatusKanbanDef, calcularRisco, RISCO_LABELS } from '@/lib/types';
+import { Processo, StatusKanban, StatusKanbanDef, calcularRisco, RISCO_LABELS, RISCO_COLORS } from '@/lib/types';
 import { differenceInDays, format, parseISO } from 'date-fns';
 
 export default function KanbanPage() {
@@ -84,8 +84,14 @@ export default function KanbanPage() {
 
     const getRiscoColor = (p: Processo) => {
         const risco = calcularRisco(p.data_prazo, p.status_kanban);
-        const colors = { critico: '#ef4444', atencao: '#f59e0b', no_prazo: '#10b981', finalizado: '#6366f1' };
-        return colors[risco];
+        const colors: Record<string, string> = { 
+            critico: '#ef4444', 
+            atencao: '#f59e0b', 
+            no_prazo: '#10b981', 
+            finalizado: '#6366f1',
+            vencido: '#991b1b'
+        };
+        return colors[risco] || '#6366f1';
     };
 
     /* ===== Handlers Drag & Drop ===== */
