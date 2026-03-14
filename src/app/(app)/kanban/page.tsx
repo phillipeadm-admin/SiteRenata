@@ -217,7 +217,7 @@ export default function KanbanPage() {
                                                     userSelect: 'none',
                                                     position: 'relative',
                                                 } as React.CSSProperties}
-                                                onClick={() => { if (!isDragging) { setSelectedProcesso(p); setModalOpen(true); } }}
+                                                onClick={() => { if (!isDragging) { window.open(`/processos/${p.id}`, '_blank'); } }}
                                             >
                                                 {/* Botão de Editar no Canto Superior Direito */}
                                                 <button
@@ -300,24 +300,6 @@ export default function KanbanPage() {
                                                             {leadTime}d no fluxo
                                                         </span>
                                                     </div>
-                                                </div>
-
-                                                {/* Botões de mover por clique */}
-                                                <div
-                                                    style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid var(--border)', display: 'flex', gap: '4px', flexWrap: 'wrap' }}
-                                                    onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                                                >
-                                                    {statusAtivos.filter((s: StatusKanbanDef) => s.nome !== status).map((s: StatusKanbanDef) => (
-                                                        <button
-                                                            key={s.nome}
-                                                            className="btn btn-secondary btn-sm"
-                                                            style={{ fontSize: '10px', padding: '3px 7px' }}
-                                                            onClick={() => moverKanban(p.id, s.nome)}
-                                                            title={`Mover para ${s.nome}`}
-                                                        >
-                                                            → {s.nome.split('/')[0].trim()}
-                                                        </button>
-                                                    ))}
                                                 </div>
                                             </div>
                                         );
