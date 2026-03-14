@@ -18,6 +18,7 @@ export default function DashboardPage() {
     const { statusAtivos, cadastros, updateConfig } = useCadastros();
 
     const thresholdCritico = parseInt(cadastros.config.prazo_critico || '3');
+    const thresholdAtencaoInicio = parseInt(cadastros.config.prazo_atencao_inicio || (thresholdCritico + 1).toString());
     const thresholdAtencao = parseInt(cadastros.config.prazo_atencao || '7');
 
     // Consolida processos + rotinas em um único array para o dashboard
@@ -130,7 +131,13 @@ export default function DashboardPage() {
                         <div className="kpi-label">Atenção</div>
                         <div className="kpi-value">{stats.atencao}</div>
                         <div className="kpi-change">
-                            prazo de {thresholdCritico + 1} a 
+                            prazo de 
+                            <input 
+                                type="number" 
+                                className="kpi-input"
+                                value={thresholdAtencaoInicio} 
+                                onChange={(e) => updateConfig('prazo_atencao_inicio', e.target.value)}
+                            /> a 
                             <input 
                                 type="number" 
                                 className="kpi-input"
