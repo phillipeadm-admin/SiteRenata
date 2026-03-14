@@ -279,17 +279,17 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
 
                                                 {/* Datas - Novos campos solicitados */}
                                                 <div style={{ 
-                                                    display: 'grid', 
-                                                    gridTemplateColumns: '1fr 1fr', 
-                                                    gap: '6px', 
+                                                    display: 'flex', 
+                                                    flexDirection: 'column',
+                                                    gap: '10px', 
                                                     marginTop: '10px',
-                                                    padding: '8px',
+                                                    padding: '10px',
                                                     background: 'rgba(99, 102, 241, 0.05)',
-                                                    borderRadius: '8px',
+                                                    borderRadius: '12px',
                                                     border: '1px solid var(--border)'
                                                 }}>
                                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                        <label style={{ fontSize: '9px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Início</label>
+                                                        <label style={{ fontSize: '9px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Início</label>
                                                         <input 
                                                             type="date"
                                                             value={etapa.data_inicio || ''}
@@ -298,19 +298,20 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
                                                             className="kanban-date-input"
                                                             style={{
                                                                 width: '100%',
-                                                                fontSize: '11px',
-                                                                padding: '6px',
-                                                                borderRadius: '6px',
+                                                                fontSize: '12px',
+                                                                padding: '6px 8px',
+                                                                borderRadius: '8px',
                                                                 background: 'var(--bg-primary)',
                                                                 border: '1px solid var(--border)',
                                                                 color: 'var(--text-primary)',
                                                                 outline: 'none',
-                                                                cursor: 'pointer'
+                                                                cursor: 'pointer',
+                                                                transition: 'border-color 0.2s'
                                                             }}
                                                         />
                                                     </div>
                                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                        <label style={{ fontSize: '9px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Fim</label>
+                                                        <label style={{ fontSize: '9px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Fim</label>
                                                         <input 
                                                             type="date"
                                                             value={etapa.data_fim || ''}
@@ -319,14 +320,15 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
                                                             className="kanban-date-input"
                                                             style={{
                                                                 width: '100%',
-                                                                fontSize: '11px',
-                                                                padding: '6px',
-                                                                borderRadius: '6px',
+                                                                fontSize: '12px',
+                                                                padding: '6px 8px',
+                                                                borderRadius: '8px',
                                                                 background: 'var(--bg-primary)',
                                                                 border: '1px solid var(--border)',
                                                                 color: 'var(--text-primary)',
                                                                 outline: 'none',
-                                                                cursor: 'pointer'
+                                                                cursor: 'pointer',
+                                                                transition: 'border-color 0.2s'
                                                             }}
                                                         />
                                                     </div>
