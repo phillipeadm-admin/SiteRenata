@@ -737,7 +737,7 @@ export default function CadastrosPage() {
                                             onChange={(e) => setNovaSubEtapa(e.target.value)}
                                             onKeyPress={(e) => {
                                                 if (e.key === 'Enter' && novaSubEtapa.trim()) {
-                                                    setNovaEtapa({ ...novaEtapa, sub_etapas: [...novaEtapa.sub_etapas, novaSubEtapa.trim()] });
+                                                    setNovaEtapa({ ...novaEtapa, sub_etapas: [...novaEtapa.sub_etapas, `• ${novaSubEtapa.trim()}`] });
                                                     setNovaSubEtapa('');
                                                 }
                                             }}
@@ -746,7 +746,7 @@ export default function CadastrosPage() {
                                             className="btn btn-secondary"
                                             onClick={() => {
                                                 if (novaSubEtapa.trim()) {
-                                                    setNovaEtapa({ ...novaEtapa, sub_etapas: [...novaEtapa.sub_etapas, novaSubEtapa.trim()] });
+                                                    setNovaEtapa({ ...novaEtapa, sub_etapas: [...novaEtapa.sub_etapas, `• ${novaSubEtapa.trim()}`] });
                                                     setNovaSubEtapa('');
                                                 }
                                             }}
@@ -824,7 +824,7 @@ export default function CadastrosPage() {
                                                                             if (e.key === 'Enter') {
                                                                                 const val = (e.target as HTMLInputElement).value;
                                                                                 if (val.trim()) {
-                                                                                    setEditEtapa({ ...editEtapa, sub_etapas: [...(editEtapa.sub_etapas || []), val.trim()] });
+                                                                                    setEditEtapa({ ...editEtapa, sub_etapas: [...(editEtapa.sub_etapas || []), `• ${val.trim()}`] });
                                                                                     (e.target as HTMLInputElement).value = '';
                                                                                 }
                                                                             }

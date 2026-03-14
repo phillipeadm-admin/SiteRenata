@@ -203,7 +203,33 @@ export function useCadastros() {
     };
 
     /* ---- FLUXO ETAPAS ---- */
+    const ajustarOrdemFluxo = async (tipo_assunto_id: string, ordemAlvo: number, idIgnorado?: string) => {
+        // Busca todas as etapas deste fluxo
+        const { data: etapas } = await supabase
+            .from('renata_fluxo_etapas')
+            .select('id, ordem')
+            .eq('tipo_assunto_id', tipo_assunto_id)
+            .order('ordem');
+
+        if (!etapas) return;
+
+        // Verifica se há conflito
+        const conflito = etapas.find(e => e.ordem === ordemAlvo && e.id !== idIgnorado);
+        if (!conflito) return;
+
+        // Se há conflito, precisamos deslocar esta e as próximas
+        const paraDeslocar = etapas.filter(e => e.ordem >= ordemAlvo && e.id !== idIgnorado);
+        
+        for (const etapa of paraDeslocar) {
+            await supabase
+                .from('renata_fluxo_etapas')
+                .update({ ordem: etapa.ordem + 1 })
+                .eq('id', etapa.id);
+        }
+    };
+
     const addFluxoEtapa = async (tipo_assunto_id: string, nome: string, ordem: number, sub_etapas: string[] = []) => {
+        await ajustarOrdemFluxo(tipo_assunto_id, ordem);
         const { error } = await supabase.from('renata_fluxo_etapas').insert([{ 
             tipo_assunto_id,
             nome: nome.trim(), 
@@ -220,6 +246,17 @@ export function useCadastros() {
     };
 
     const updateFluxoEtapa = async (id: string, nome: string, ordem: number, sub_etapas: string[] = []) => {
+        // Primeiro buscamos o registro atual para saber o tipo_assunto_id
+        const { data: atual } = await supabase
+            .from('renata_fluxo_etapas')
+            .select('tipo_assunto_id, ordem')
+            .eq('id', id)
+            .single();
+
+        if (atual && atual.ordem !== ordem) {
+            await ajustarOrdemFluxo(atual.tipo_assunto_id, ordem, id);
+        }
+
         const { error } = await supabase.from('renata_fluxo_etapas').update({ 
             nome: nome.trim(), 
             ordem,
