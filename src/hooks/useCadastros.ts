@@ -203,13 +203,14 @@ export function useCadastros() {
     };
 
     /* ---- FLUXO ETAPAS ---- */
-    const addFluxoEtapa = async (tipo_assunto_id: string, nome: string, dias_entrada: number, dias_saida: number, ordem: number) => {
+    const addFluxoEtapa = async (tipo_assunto_id: string, nome: string, ordem: number, sub_etapas: string[] = []) => {
         const { error } = await supabase.from('renata_fluxo_etapas').insert([{ 
             tipo_assunto_id,
             nome: nome.trim(), 
-            dias_entrada,
-            dias_saida,
-            ordem
+            dias_entrada: 0,
+            dias_saida: 0,
+            ordem,
+            sub_etapas
         }]);
         if (error) {
             console.error("Erro ao inserir Etapa de Fluxo:", error);
@@ -218,12 +219,11 @@ export function useCadastros() {
         await fetchCadastros();
     };
 
-    const updateFluxoEtapa = async (id: string, nome: string, dias_entrada: number, dias_saida: number, ordem: number) => {
+    const updateFluxoEtapa = async (id: string, nome: string, ordem: number, sub_etapas: string[] = []) => {
         const { error } = await supabase.from('renata_fluxo_etapas').update({ 
             nome: nome.trim(), 
-            dias_entrada,
-            dias_saida,
-            ordem 
+            ordem,
+            sub_etapas
         }).eq('id', id);
         if (error) {
             console.error("Erro ao atualizar Etapa de Fluxo:", error);

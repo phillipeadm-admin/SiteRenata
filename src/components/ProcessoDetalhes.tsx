@@ -154,55 +154,61 @@ export default function ProcessoDetalhes({ item, onBack, showBackButton = false 
                         ) : (
                             <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Nenhum marco registrado até o momento.</p>
                         )}
-                    </div>
-
-                    {/* FLUXO DE TRABALHO ESTIPULADO */}
+                      {/* FLUXO DE TRABALHO ESTIPULADO */}
                     {etapas.length > 0 && (
                         <div style={{ background: 'var(--bg-secondary)', padding: '24px', borderRadius: '20px', border: '1px solid var(--border)' }}>
-                            <h3 style={{ fontSize: '18px', marginBottom: '16px' }}>🌊 Fluxo de Trabalho Estipulado</h3>
+                            <h3 style={{ fontSize: '18px', marginBottom: '16px' }}>🌊 Fluxo de Trabalho e Checklists</h3>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                {etapas.map((etapa, idx) => {
-                                    const dataEntradaRaw = parseISO(item.data_entrada);
-                                    const dataInicio = new Date(dataEntradaRaw);
-                                    dataInicio.setDate(dataInicio.getDate() + etapa.dias_entrada);
-                                    
-                                    const dataFim = new Date(dataEntradaRaw);
-                                    dataFim.setDate(dataFim.getDate() + etapa.dias_saida);
-
-                                    return (
-                                        <div key={etapa.id} style={{ 
-                                            display: 'grid',
-                                            gridTemplateColumns: '120px 1fr 120px',
-                                            alignItems: 'center',
-                                            gap: '16px',
-                                            padding: '16px',
-                                            background: 'var(--bg-primary)',
-                                            borderRadius: '16px',
-                                            border: '1px solid var(--border)'
-                                        }}>
-                                            <div style={{ textAlign: 'center' }}>
-                                                <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Início</div>
-                                                <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--accent-blue)' }}>
-                                                    {format(dataInicio, 'dd/MM/yyyy')}
-                                                </div>
-                                            </div>
-                                            
-                                            <div style={{ borderLeft: '1px solid var(--border)', borderRight: '1px solid var(--border)', padding: '0 16px' }}>
+                                {etapas.map((etapa, idx) => (
+                                    <div key={etapa.id} style={{ 
+                                        padding: '16px',
+                                        background: 'var(--bg-primary)',
+                                        borderRadius: '16px',
+                                        border: '1px solid var(--border)'
+                                    }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: (etapa.sub_etapas && etapa.sub_etapas.length > 0) ? '12px' : 0 }}>
+                                            <div>
                                                 <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Etapa {idx + 1}</div>
-                                                <div style={{ fontSize: '15px', fontWeight: 600 }}>{etapa.nome}</div>
-                                            </div>
-
-                                            <div style={{ textAlign: 'center' }}>
-                                                <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Saída</div>
-                                                <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--accent-purple)' }}>
-                                                    {format(dataFim, 'dd/MM/yyyy')}
-                                                </div>
+                                                <div style={{ fontSize: '16px', fontWeight: 600 }}>{etapa.nome}</div>
                                             </div>
                                         </div>
-                                    );
-                                })}
+
+                                        {(etapa.sub_etapas && etapa.sub_etapas.length > 0) && (
+                                            <div style={{ 
+                                                display: 'grid', 
+                                                gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', 
+                                                gap: '8px',
+                                                padding: '12px',
+                                                background: 'var(--bg-secondary)',
+                                                borderRadius: '12px',
+                                                border: '1px solid var(--border)'
+                                            }}>
+                                                {etapa.sub_etapas.map((sub, sIdx) => (
+                                                    <div key={sIdx} style={{ 
+                                                        display: 'flex', 
+                                                        alignItems: 'center', 
+                                                        gap: '8px',
+                                                        fontSize: '13px',
+                                                        color: 'var(--text-secondary)'
+                                                    }}>
+                                                        <div style={{ 
+                                                            width: '16px', 
+                                                            height: '16px', 
+                                                            borderRadius: '4px', 
+                                                            border: '2px solid var(--border)',
+                                                            flexShrink: 0
+                                                        }} />
+                                                        {sub}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
                             </div>
                         </div>
+                    )}
+ </div>
                     )}
                 </div>
 

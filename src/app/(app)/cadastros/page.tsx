@@ -37,10 +37,11 @@ export default function CadastrosPage() {
     const [deleteStatusId, setDeleteStatusId] = useState<string | null>(null);
 
     const [tipoFluxoId, setTipoFluxoId] = useState<string>('');
-    const [novaEtapa, setNovaEtapa] = useState({ nome: '', dias_entrada: 0, dias_saida: 1, ordem: 1 });
+    const [novaEtapa, setNovaEtapa] = useState<{ nome: string, ordem: number, sub_etapas: string[] }>({ nome: '', ordem: 1, sub_etapas: [] });
     const [editEtapaId, setEditEtapaId] = useState<string | null>(null);
-    const [editEtapa, setEditEtapa] = useState({ nome: '', dias_entrada: 0, dias_saida: 1, ordem: 1 });
+    const [editEtapa, setEditEtapa] = useState<{ nome: string, ordem: number, sub_etapas: string[] }>({ nome: '', ordem: 1, sub_etapas: [] });
     const [deleteEtapaId, setDeleteEtapaId] = useState<string | null>(null);
+    const [novaSubEtapa, setNovaSubEtapa] = useState('');
 
     const responsaveisDaAba = cadastros.responsaveis;
     const statusOrdenados = [...cadastros.statusKanban].sort((a, b) => a.ordem - b.ordem);
@@ -686,8 +687,8 @@ export default function CadastrosPage() {
                         {tipoFluxoId && (
                             <>
                                 <div style={{
-                                    display: 'grid', gridTemplateColumns: '1fr 100px 100px 100px auto', gap: '10px',
-                                    marginBottom: '20px', padding: '16px',
+                                    display: 'grid', gridTemplateColumns: '1fr 100px auto', gap: '10px',
+                                    marginBottom: '10px', padding: '16px',
                                     background: 'var(--bg-secondary)', borderRadius: '12px',
                                     border: '1px solid var(--border)', alignItems: 'flex-end'
                                 }}>
@@ -698,24 +699,6 @@ export default function CadastrosPage() {
                                             placeholder="Ex: Análise Inicial"
                                             value={novaEtapa.nome}
                                             onChange={e => setNovaEtapa({ ...novaEtapa, nome: e.target.value })}
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="form-label">D+ Entrada</label>
-                                        <input
-                                            className="form-input"
-                                            type="number"
-                                            value={novaEtapa.dias_entrada}
-                                            onChange={e => setNovaEtapa({ ...novaEtapa, dias_entrada: parseInt(e.target.value) || 0 })}
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="form-label">D+ Saída</label>
-                                        <input
-                                            className="form-input"
-                                            type="number"
-                                            value={novaEtapa.dias_saida}
-                                            onChange={e => setNovaEtapa({ ...novaEtapa, dias_saida: parseInt(e.target.value) || 0 })}
                                         />
                                     </div>
                                     <div className="form-group">
@@ -731,23 +714,68 @@ export default function CadastrosPage() {
                                         className="btn btn-primary"
                                         disabled={!novaEtapa.nome.trim()}
                                         onClick={async () => {
-                                            await addFluxoEtapa(tipoFluxoId, novaEtapa.nome, novaEtapa.dias_entrada, novaEtapa.dias_saida, novaEtapa.ordem);
-                                            setNovaEtapa({ nome: '', dias_entrada: 0, dias_saida: 1, ordem: novaEtapa.ordem + 1 });
+                                            await addFluxoEtapa(tipoFluxoId, novaEtapa.nome, novaEtapa.ordem, novaEtapa.sub_etapas);
+                                            setNovaEtapa({ nome: '', ordem: novaEtapa.ordem + 1, sub_etapas: [] });
                                         }}
                                     >
                                         ✅ Adicionar
                                     </button>
                                 </div>
 
+                                <div style={{
+                                    marginBottom: '20px', padding: '16px',
+                                    background: 'var(--bg-secondary)', borderRadius: '12px',
+                                    border: '1px solid var(--border)'
+                                }}>
+                                    <label className="form-label">Checklist da Etapa (Sub-etapas)</label>
+                                    <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                                        <input 
+                                            type="text" 
+                                            className="form-input" 
+                                            placeholder="Adicionar item ao checklist..."
+                                            value={novaSubEtapa}
+                                            onChange={(e) => setNovaSubEtapa(e.target.value)}
+                                            onKeyPress={(e) => {
+                                                if (e.key === 'Enter' && novaSubEtapa.trim()) {
+                                                    setNovaEtapa({ ...novaEtapa, sub_etapas: [...novaEtapa.sub_etapas, novaSubEtapa.trim()] });
+                                                    setNovaSubEtapa('');
+                                                }
+                                            }}
+                                        />
+                                        <button 
+                                            className="btn btn-secondary"
+                                            onClick={() => {
+                                                if (novaSubEtapa.trim()) {
+                                                    setNovaEtapa({ ...novaEtapa, sub_etapas: [...novaEtapa.sub_etapas, novaSubEtapa.trim()] });
+                                                    setNovaSubEtapa('');
+                                                }
+                                            }}
+                                        >
+                                            ➕
+                                        </button>
+                                    </div>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                        {novaEtapa.sub_etapas.map((sub, idx) => (
+                                            <span key={idx} className="badge" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                {sub}
+                                                <button 
+                                                    style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '10px' }}
+                                                    onClick={() => setNovaEtapa({ ...novaEtapa, sub_etapas: novaEtapa.sub_etapas.filter((_, i) => i !== idx) })}
+                                                >
+                                                    ✕
+                                                </button>
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+
                                 <div className="table-wrapper">
                                     <table>
                                         <thead>
                                             <tr>
-                                                <th>Ordem</th>
-                                                <th>Etapa</th>
-                                                <th>Entrada (D+)</th>
-                                                <th>Saída (D+)</th>
-                                                <th style={{ textAlign: 'right', width: '250px' }}>Ações</th>
+                                                <th style={{ width: '80px' }}>Ordem</th>
+                                                <th>Etapa / Checklist</th>
+                                                <th style={{ textAlign: 'right', width: '200px' }}>Ações</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -781,39 +809,49 @@ export default function CadastrosPage() {
                                                     </td>
                                                     <td>
                                                         {editEtapaId === etapa.id ? (
-                                                            <input
-                                                                className="form-input"
-                                                                value={editEtapa.nome}
-                                                                onChange={e => setEditEtapa({ ...editEtapa, nome: e.target.value })}
-                                                            />
+                                                            <div>
+                                                                <input
+                                                                    className="form-input"
+                                                                    value={editEtapa.nome}
+                                                                    onChange={e => setEditEtapa({ ...editEtapa, nome: e.target.value })}
+                                                                    style={{ marginBottom: '8px' }}
+                                                                />
+                                                                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                                                                    <input 
+                                                                        className="form-input" 
+                                                                        placeholder="Add sub-etapa..."
+                                                                        onKeyPress={(e) => {
+                                                                            if (e.key === 'Enter') {
+                                                                                const val = (e.target as HTMLInputElement).value;
+                                                                                if (val.trim()) {
+                                                                                    setEditEtapa({ ...editEtapa, sub_etapas: [...(editEtapa.sub_etapas || []), val.trim()] });
+                                                                                    (e.target as HTMLInputElement).value = '';
+                                                                                }
+                                                                            }
+                                                                        }}
+                                                                    />
+                                                                </div>
+                                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                                                    {(editEtapa.sub_etapas || []).map((sub, idx) => (
+                                                                        <span key={idx} className="badge" style={{ fontSize: '11px' }}>
+                                                                            {sub}
+                                                                            <button 
+                                                                                style={{ marginLeft: '4px', border: 'none', background: 'none', cursor: 'pointer' }}
+                                                                                onClick={() => setEditEtapa({ ...editEtapa, sub_etapas: editEtapa.sub_etapas.filter((_, i) => i !== idx) })}
+                                                                            >✕</button>
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
                                                         ) : (
-                                                            <span style={{ fontWeight: 500 }}>{etapa.nome}</span>
-                                                        )}
-                                                    </td>
-                                                    <td>
-                                                        {editEtapaId === etapa.id ? (
-                                                            <input
-                                                                className="form-input"
-                                                                type="number"
-                                                                style={{ width: '80px' }}
-                                                                value={editEtapa.dias_entrada}
-                                                                onChange={e => setEditEtapa({ ...editEtapa, dias_entrada: parseInt(e.target.value) || 0 })}
-                                                            />
-                                                        ) : (
-                                                            <span>D + {etapa.dias_entrada}</span>
-                                                        )}
-                                                    </td>
-                                                    <td>
-                                                        {editEtapaId === etapa.id ? (
-                                                            <input
-                                                                className="form-input"
-                                                                type="number"
-                                                                style={{ width: '80px' }}
-                                                                value={editEtapa.dias_saida}
-                                                                onChange={e => setEditEtapa({ ...editEtapa, dias_saida: parseInt(e.target.value) || 0 })}
-                                                            />
-                                                        ) : (
-                                                            <span>D + {etapa.dias_saida}</span>
+                                                            <div>
+                                                                <div style={{ fontWeight: 500 }}>{etapa.nome}</div>
+                                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
+                                                                    {(etapa.sub_etapas || []).map((sub, idx) => (
+                                                                        <span key={idx} className="badge" style={{ fontSize: '10px', opacity: 0.8 }}>{sub}</span>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
                                                         )}
                                                     </td>
                                                     <td>
@@ -826,7 +864,7 @@ export default function CadastrosPage() {
                                                             ) : editEtapaId === etapa.id ? (
                                                                 <>
                                                                     <button className="btn btn-primary btn-sm" onClick={() => { 
-                                                                        updateFluxoEtapa(etapa.id, editEtapa.nome, editEtapa.dias_entrada, editEtapa.dias_saida, editEtapa.ordem); 
+                                                                        updateFluxoEtapa(etapa.id, editEtapa.nome, editEtapa.ordem, editEtapa.sub_etapas); 
                                                                         setEditEtapaId(null); 
                                                                     }}>💾</button>
                                                                     <button className="btn btn-secondary btn-sm" onClick={() => setEditEtapaId(null)}>✕</button>
@@ -835,7 +873,11 @@ export default function CadastrosPage() {
                                                                 <>
                                                                     <button className="btn btn-secondary btn-sm" onClick={() => {
                                                                         setEditEtapaId(etapa.id);
-                                                                        setEditEtapa({ nome: etapa.nome, dias_entrada: etapa.dias_entrada, dias_saida: etapa.dias_saida, ordem: etapa.ordem });
+                                                                        setEditEtapa({ 
+                                                                            nome: etapa.nome, 
+                                                                            ordem: etapa.ordem,
+                                                                            sub_etapas: etapa.sub_etapas || [] 
+                                                                        });
                                                                     }}>✏️</button>
                                                                     <button className="btn btn-danger btn-sm" onClick={() => setDeleteEtapaId(etapa.id)}>🗑️</button>
                                                                 </>

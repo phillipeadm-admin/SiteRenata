@@ -10,7 +10,6 @@ const navItems = [
     { icon: '📁', label: 'Processos', href: '/processos' },
     { icon: '🔄', label: 'Rotinas', href: '/rotinas' },
     { icon: '📋', label: 'Kanban', href: '/kanban' },
-    { icon: '🌊', label: 'Fluxo', href: '/cadastros?aba=fluxo' },
     { icon: '📊', label: 'Dashboard', href: '/dashboard' },
     { icon: '📈', label: 'Relatórios', href: '/relatorios' },
     { icon: '📁', label: 'Arquivo', href: '/arquivo' },
