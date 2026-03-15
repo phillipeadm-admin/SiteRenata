@@ -9,7 +9,7 @@ import { differenceInDays, format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-    ResponsiveContainer
+    ResponsiveContainer, Cell
 } from 'recharts';
 
 export default function DashboardPage() {
@@ -52,9 +52,11 @@ export default function DashboardPage() {
 
     const tipoData = useMemo(() => {
         const map: Record<string, number> = {};
-        todos.forEach(p => {
-            map[p.tipo_assunto] = (map[p.tipo_assunto] || 0) + 1;
-        });
+        todos
+            .filter(p => p.status_kanban.toUpperCase() !== 'FINALIZADO')
+            .forEach(p => {
+                map[p.tipo_assunto] = (map[p.tipo_assunto] || 0) + 1;
+            });
         return Object.entries(map).map(([name, value]) => ({ name, value }));
     }, [todos]);
 
@@ -135,7 +137,8 @@ export default function DashboardPage() {
                 porRevisor[revisor].tipos[p.tipo_assunto].count += 1;
                 porRevisor[revisor].tipos[p.tipo_assunto].processos.push({
                     assunto: p.assunto,
-                    leadTime
+                    leadTime,
+                    executor: p.responsavel_execucao || 'Sem Executor'
                 });
             });
 
@@ -307,7 +310,11 @@ export default function DashboardPage() {
                                     labelStyle={{ color: '#1a202c', fontWeight: 600 }}
                                     itemStyle={{ color: '#4a5568' }}
                                 />
-                                <Bar dataKey="value" fill="#6366f1" radius={[6, 6, 0, 0]} name="Processos" />
+                                <Bar dataKey="value" radius={[6, 6, 0, 0]} name="Processos">
+                                    {tipoData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={index % 2 === 0 ? 'var(--accent-blue)' : 'var(--accent-cyan)'} />
+                                    ))}
+                                </Bar>
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
@@ -492,7 +499,7 @@ export default function DashboardPage() {
                                                         </span>
                                                     </div>
                                                     
-                                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                                                         {data.processos.slice(0, 5).map((proc: any, idx: number) => (
                                                             <div 
                                                                 key={idx} 
@@ -500,17 +507,22 @@ export default function DashboardPage() {
                                                             >
                                                                 <div style={{ 
                                                                     fontSize: '10px', 
-                                                                    padding: '2px 6px', 
-                                                                    background: 'white', 
-                                                                    borderRadius: '4px',
-                                                                    border: '1px solid var(--border-color)',
-                                                                    color: 'var(--text-secondary)',
+                                                                    padding: '4px 8px', 
+                                                                    background: 'rgba(255,255,255,0.05)', 
+                                                                    borderRadius: '6px',
+                                                                    border: '1px solid var(--border)',
+                                                                    color: 'var(--text-primary)',
                                                                     display: 'flex',
-                                                                    alignItems: 'center',
+                                                                    flexDirection: 'column',
                                                                     gap: '2px',
                                                                     cursor: 'default'
                                                                 }}>
-                                                                    ⏱️ {proc.leadTime}d
+                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+                                                                        ⏱️ {proc.leadTime}d
+                                                                    </div>
+                                                                    <div style={{ fontSize: '9px', color: 'var(--accent-blue)', fontWeight: 600 }}>
+                                                                        👤 {proc.executor}
+                                                                    </div>
                                                                 </div>
                                                                 <div className="tooltip-content">
                                                                     {proc.assunto}
