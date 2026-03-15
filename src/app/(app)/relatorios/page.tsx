@@ -188,6 +188,94 @@ export default function RelatoriosPage() {
         [processosFiltrados]
     );
 
+    // Cruzamento de dados: Criados vs Finalizados
+    const dadosGargaloResumo = useMemo(() => {
+        let criados = 0;
+        let finalizados = 0;
+
+        processosFiltrados.forEach(p => {
+            if (p.data_entrada) {
+                const dataE = parseISO(p.data_entrada);
+                const mesMatch = filtroMes === 'todos' || (getMonth(dataE) + 1).toString() === filtroMes;
+                const anoMatch = filtroAno === 'todos' || getYear(dataE).toString() === filtroAno;
+                if (mesMatch && anoMatch) criados++;
+            }
+
+            if (p.data_finalizacao) {
+                const dataF = parseISO(p.data_finalizacao);
+                const mesMatch = filtroMes === 'todos' || (getMonth(dataF) + 1).toString() === filtroMes;
+                const anoMatch = filtroAno === 'todos' || getYear(dataF).toString() === filtroAno;
+                if (mesMatch && anoMatch) finalizados++;
+            }
+        });
+
+        return { criados, finalizados };
+    }, [processosFiltrados, filtroMes, filtroAno]);
+
+    // Cálculo de Lead Time Médio entre etapas
+    const leadTimesEtapas = useMemo(() => {
+        const somas = {
+            'exec_revisao': { total: 0, count: 0 }, // Em Andamento -> 1ª Revisão
+            'revisao_final': { total: 0, count: 0 }, // 1ª Revisão -> Revisão Final
+            'finalizado': { total: 0, count: 0 }    // Revisão Final -> Finalizado
+        };
+
+        processosFiltrados.forEach(p => {
+            const datas = p.datas_intermediarias || [];
+            const dataEntrada = p.data_entrada ? parseISO(p.data_entrada) : null;
+            const dataFinal = p.data_finalizacao ? parseISO(p.data_finalizacao) : null;
+
+            const marco1Rev = datas.find(d => d.justificativa.includes('1ª Revisão'));
+            const marcoRevFinal = datas.find(d => d.justificativa.includes('Revisão Final'));
+
+            // 1. Entrada -> 1ª Revisão
+            if (dataEntrada && marco1Rev) {
+                const diff = differenceInDays(parseISO(marco1Rev.data), dataEntrada);
+                if (diff >= 0) {
+                    somas.exec_revisao.total += diff;
+                    somas.exec_revisao.count++;
+                }
+            }
+
+            // 2. 1ª Revisão -> Revisão Final
+            if (marco1Rev && marcoRevFinal) {
+                const diff = differenceInDays(parseISO(marcoRevFinal.data), parseISO(marco1Rev.data));
+                if (diff >= 0) {
+                    somas.revisao_final.total += diff;
+                    somas.revisao_final.count++;
+                }
+            }
+
+            // 3. Revisão Final -> Finalizado
+            if (marcoRevFinal && dataFinal) {
+                const diff = differenceInDays(dataFinal, parseISO(marcoRevFinal.data));
+                if (diff >= 0) {
+                    somas.finalizado.total += diff;
+                    somas.finalizado.count++;
+                }
+            }
+        });
+
+        const labels = {
+            exec_revisao: 'Em Andamento → 1ª Revisão',
+            revisao_final: '1ª Revisão → Revisão Final',
+            finalizado: 'Revisão Final → Finalizado'
+        };
+
+        const result = Object.entries(somas).map(([key, val]) => ({
+            etapa: labels[key as keyof typeof labels],
+            media: val.count > 0 ? Math.round(val.total / val.count) : 0,
+            key
+        }));
+
+        const maxMedia = Math.max(...result.map(r => r.media));
+        
+        return result.map(r => ({
+            ...r,
+            isBottleneck: maxMedia > 0 && r.media === maxMedia
+        }));
+    }, [processosFiltrados]);
+
     // Dados para o card comparativo de produtividade (Pontuação ponderada)
     const dadosProdutividade = useMemo(() => {
         const totalGlobal = matrizExecutores.reduce((acc, m) => acc + m.prodExecucao + m.prodRevisao, 0);
@@ -445,15 +533,55 @@ export default function RelatoriosPage() {
                     {/* Gargalo */}
                     <div className="card">
                         <div className="card-header">
-                            <h2 className="card-title">⏸️ Gargalo</h2>
+                            <h2 className="card-title">⏸️ Gargalo & Fluxo</h2>
                         </div>
+                        
+                        {/* Resumo Criados vs Finalizados */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+                            <div style={{ background: 'rgba(99, 102, 241, 0.05)', padding: '12px', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                                <div style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>Criados</div>
+                                <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--accent-blue)' }}>{dadosGargaloResumo.criados}</div>
+                            </div>
+                            <div style={{ background: 'rgba(16, 185, 129, 0.05)', padding: '12px', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                                <div style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>Finalizados</div>
+                                <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--accent-green)' }}>{dadosGargaloResumo.finalizados}</div>
+                            </div>
+                        </div>
+
+                        {/* Lead Time por Etapa */}
+                        <div style={{ marginBottom: '20px' }}>
+                            <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '8px', textTransform: 'uppercase' }}>Lead Time Médio por Etapa (dias)</div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                {leadTimesEtapas.map(lt => (
+                                    <div key={lt.key} style={{ 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        justifyContent: 'space-between',
+                                        padding: '8px 12px',
+                                        background: lt.isBottleneck ? 'rgba(239, 68, 68, 0.08)' : 'var(--bg-secondary)',
+                                        borderRadius: '8px',
+                                        border: lt.isBottleneck ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid var(--border)',
+                                        position: 'relative',
+                                        overflow: 'hidden'
+                                    }}>
+                                        <div style={{ fontSize: '11px', fontWeight: 600 }}>
+                                            {lt.etapa}
+                                            {lt.isBottleneck && <span style={{ marginLeft: '8px', fontSize: '9px', background: 'var(--accent-red)', color: 'white', padding: '1px 4px', borderRadius: '4px' }}>GARGALO</span>}
+                                        </div>
+                                        <div style={{ fontSize: '12px', fontWeight: 700, color: lt.isBottleneck ? 'var(--accent-red)' : 'var(--text-primary)' }}>{lt.media}d</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Itens Parados */}
+                        <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '8px', textTransform: 'uppercase' }}>Itens Parados (+3 dias)</div>
                         {gargalos.length === 0 ? (
-                            <div className="empty-state">
-                                <div className="empty-state-icon">✅</div>
-                                <div className="empty-state-text">Nenhum gargalo identificado no momento</div>
+                            <div className="empty-state" style={{ padding: '20px' }}>
+                                <div className="empty-state-text">Nenhum item parado no momento</div>
                             </div>
                         ) : (
-                            <div className="table-wrapper" style={{ maxHeight: '240px', overflowY: 'auto' }}>
+                            <div className="table-wrapper" style={{ maxHeight: '160px', overflowY: 'auto' }}>
                                 <table className="table-compact">
                                     <thead>
                                         <tr>
@@ -467,7 +595,6 @@ export default function RelatoriosPage() {
                                             <tr key={p.id}>
                                                 <td style={{ fontSize: '11px' }}>
                                                     <div style={{ fontWeight: 600 }}>{p.tipo_assunto}</div>
-                                                    <div style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '120px' }}>{p.assunto}</div>
                                                 </td>
                                                 <td>
                                                     <span style={{ fontSize: '10px', background: 'var(--bg-secondary)', padding: '2px 6px', borderRadius: '4px', textTransform: 'capitalize' }}>
