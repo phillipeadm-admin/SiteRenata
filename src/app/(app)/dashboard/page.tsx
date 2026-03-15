@@ -113,12 +113,12 @@ export default function DashboardPage() {
                     porRevisor[revisor] = {
                         nome: revisor,
                         tipos: {} as Record<string, { count: number; processos: { assunto: string; leadTime: number }[] }>
-                    };
-                }
+                };
+            }
 
-                if (!porRevisor[revisor].tipos[p.tipo_assunto]) {
-                    porRevisor[revisor].tipos[p.tipo_assunto] = { count: 0, procesos: [] };
-                }
+            if (!porRevisor[revisor].tipos[p.tipo_assunto]) {
+                porRevisor[revisor].tipos[p.tipo_assunto] = { count: 0, processos: [] };
+            }
 
                 const leadTime = differenceInDays(new Date(), parseISO(p.data_entrada));
                 porRevisor[revisor].tipos[p.tipo_assunto].count += 1;
