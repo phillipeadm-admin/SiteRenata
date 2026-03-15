@@ -146,14 +146,17 @@ export default function RelatoriosPage() {
         }));
     }, [processosFiltrados]);
 
-    // Gargalo: processos parados em Revisão
-    const processosEmRevisao = useMemo(() =>
+    // Gargalo: processos parados em qualquer estágio não finalizado
+    const gargalos = useMemo(() =>
         processosFiltrados
-            .filter(p => p.status_kanban?.toLowerCase().includes('revisão'))
+            .filter(p => {
+                const s = p.status_kanban?.toLowerCase() || '';
+                return !s.includes('finalizado') && !s.includes('concluí');
+            })
             .map(p => {
                 let diasParado = 0;
                 try {
-                    const dataUpdate = p.updated_at ? parseISO(p.updated_at) : new Date();
+                    const dataUpdate = p.updated_at ? parseISO(p.updated_at) : (p.data_entrada ? parseISO(p.data_entrada) : new Date());
                     diasParado = Math.max(0, differenceInDays(new Date(), dataUpdate));
                 } catch (e) {
                     console.error("Erro ao calcular dias parado:", p.id, e);
@@ -163,15 +166,28 @@ export default function RelatoriosPage() {
                     diasParado,
                 };
             })
+            .filter(p => p.diasParado >= 3) // Considera gargalo se estiver parado há 3 ou mais dias
             .sort((a, b) => b.diasParado - a.diasParado),
         [processosFiltrados]
     );
 
+    // Dados para o card comparativo de produtividade
+    const dadosProdutividade = useMemo(() => {
+        return matrizExecutores
+            .map(m => ({
+                name: m.executor,
+                entregas: m.execucao + m.revisao,
+                executado: m.execucao,
+                revisado: m.revisao
+            }))
+            .sort((a, b) => b.entregas - a.entregas);
+    }, [matrizExecutores]);
+
     // Gráfico de executor vs. carga
     const chartExecutor = useMemo(() => matrizExecutores.map(m => ({
         name: (m.executor || 'Indefinido').split(' ')[0],
-        'EXECUÇÃO': m.execucao || 0,
-        'REVISÃO': m.revisao || 0,
+        'EXECUTADO': m.execucao || 0,
+        'REVISADO': m.revisao || 0,
         'FINALIZADOS': m.finalizados || 0,
         Críticos: m.criticos || 0,
     })), [matrizExecutores]);
@@ -259,10 +275,10 @@ export default function RelatoriosPage() {
             </div>
 
             <div className="page-body">
-                {/* Matriz por Executor */}
+                {/* Matriz */}
                 <div className="card" style={{ marginBottom: '20px' }}>
                     <div className="card-header">
-                        <h2 className="card-title">👥 Matriz por Executor</h2>
+                        <h2 className="card-title">👥 Matriz</h2>
                     </div>
                     <div className="table-wrapper">
                         <table>
@@ -270,17 +286,14 @@ export default function RelatoriosPage() {
                                 <tr>
                                     <th>Executor</th>
                                     <th>Total</th>
-                                    <th>EXECUÇÃO</th>
-                                    <th>REVISÃO</th>
+                                    <th>EXECUTADO</th>
+                                    <th>REVISADO</th>
                                     <th>Finalizados</th>
-                                    <th>🚨 Críticos</th>
                                     <th>Lead Time Médio</th>
-                                    <th>Aproveitamento</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {matrizExecutores.map(m => {
-                                    const carga = m.total > 0 ? Math.round(((m.execucao + m.revisao) / m.total) * 100) : 0;
                                     return (
                                         <tr key={m.executor}>
                                             <td style={{ fontWeight: 600 }}>{m.executor}</td>
@@ -292,35 +305,10 @@ export default function RelatoriosPage() {
                                                     fontWeight: 700
                                                 }}>{m.total}</span>
                                             </td>
-                                            <td style={{ color: '#60a5fa' }}>{m.execucao}</td>
-                                            <td style={{ color: '#fbbf24' }}>{m.revisao}</td>
+                                            <td style={{ color: '#60a5fa', fontWeight: 700 }}>{m.execucao}</td>
+                                            <td style={{ color: '#fbbf24', fontWeight: 700 }}>{m.revisao}</td>
                                             <td style={{ color: '#34d399' }}>{m.finalizados}</td>
-                                            <td>
-                                                {m.criticos > 0 ? (
-                                                    <span className="badge badge-risco-critico">{m.criticos}</span>
-                                                ) : (
-                                                    <span style={{ color: 'var(--text-muted)' }}>0</span>
-                                                )}
-                                            </td>
                                             <td style={{ fontWeight: 600 }}>{m.mediaLeadTime} dias</td>
-                                            <td>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                    <div className="progress-bar" style={{ width: '80px' }}>
-                                                        <div
-                                                            className="progress-fill"
-                                                            style={{
-                                                                width: `${carga}%`,
-                                                                background: carga > 70
-                                                                    ? 'var(--accent-red)'
-                                                                    : carga > 40
-                                                                        ? 'var(--accent-yellow)'
-                                                                        : 'var(--accent-green)'
-                                                            }}
-                                                        />
-                                                    </div>
-                                                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{carga}%</span>
-                                                </div>
-                                            </td>
                                         </tr>
                                     );
                                 })}
@@ -329,11 +317,11 @@ export default function RelatoriosPage() {
                     </div>
                 </div>
 
-                {/* Gráfico de carga */}
+                {/* Gráfico de carga e Comparativo */}
                 <div className="grid-2" style={{ marginBottom: '20px' }}>
                     <div className="card">
                         <div className="card-header">
-                            <h2 className="card-title">📊 EXECUÇÃO E REVISÃO POR RESPONSÁVEL</h2>
+                            <h2 className="card-title">📊 EXECUTADO E REVISADO POR RESPONSÁVEL</h2>
                         </div>
                         <ResponsiveContainer width="100%" height={240}>
                             <BarChart data={chartExecutor} margin={{ left: -20 }}>
@@ -344,13 +332,48 @@ export default function RelatoriosPage() {
                                     contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '10px', fontSize: '12px' }}
                                 />
                                 <Legend wrapperStyle={{ fontSize: '11px' }} />
-                                <Bar dataKey="EXECUÇÃO" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                                <Bar dataKey="REVISÃO" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="EXECUTADO" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="REVISADO" fill="#f59e0b" radius={[4, 4, 0, 0]} />
                                 <Bar dataKey="FINALIZADOS" fill="#10b981" radius={[4, 4, 0, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
 
+                    <div className="card">
+                        <div className="card-header">
+                            <h2 className="card-title">🏆 Comparativo de Produtividade</h2>
+                        </div>
+                        <div style={{ padding: '0 20px 20px' }}>
+                            {dadosProdutividade.length === 0 ? (
+                                <div className="empty-state">Sem dados para comparar</div>
+                            ) : (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                    {dadosProdutividade.slice(0, 5).map((item, idx) => {
+                                        const maxEntregas = dadosProdutividade[0].entregas || 1;
+                                        const perc = Math.round((item.entregas / maxEntregas) * 100);
+                                        return (
+                                            <div key={item.name} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 600 }}>
+                                                    <span>{idx + 1}. {item.name}</span>
+                                                    <span>{item.entregas} entregas</span>
+                                                </div>
+                                                <div className="progress-bar" style={{ height: '8px', background: 'var(--bg-secondary)' }}>
+                                                    <div className="progress-fill" style={{ 
+                                                        width: `${perc}%`, 
+                                                        background: idx === 0 ? 'linear-gradient(90deg, #6366f1, #a855f7)' : 'var(--accent-blue)',
+                                                        opacity: 0.8 + (1 - idx/5) * 0.2
+                                                    }} />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="grid-2" style={{ marginBottom: '20px' }}>
                     {/* Por Tipo */}
                     <div className="card">
                         <div className="card-header">
@@ -369,71 +392,55 @@ export default function RelatoriosPage() {
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
-                </div>
 
-                {/* Gargalo: Revisão */}
-                <div className="card" style={{ marginBottom: '20px' }}>
-                    <div className="card-header">
-                        <h2 className="card-title">⏸️ Gargalo — Processos Parados em Revisão</h2>
-                    </div>
-                    {processosEmRevisao.length === 0 ? (
-                        <div className="empty-state">
-                            <div className="empty-state-icon">✅</div>
-                            <div className="empty-state-text">Nenhum processo aguardando revisão</div>
+                    {/* Gargalo */}
+                    <div className="card">
+                        <div className="card-header">
+                            <h2 className="card-title">⏸️ Gargalo</h2>
                         </div>
-                    ) : (
-                        <div className="table-wrapper">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Processo</th>
-                                        <th>Executor</th>
-                                        <th>Revisor</th>
-                                        <th>Prazo</th>
-                                        <th>Dias Parado</th>
-                                        <th>Risco</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {processosEmRevisao.map(p => {
-                                        const risco = calcularRisco(p.data_prazo, p.status_kanban);
-                                        return (
+                        {gargalos.length === 0 ? (
+                            <div className="empty-state">
+                                <div className="empty-state-icon">✅</div>
+                                <div className="empty-state-text">Nenhum gargalo identificado no momento</div>
+                            </div>
+                        ) : (
+                            <div className="table-wrapper" style={{ maxHeight: '240px', overflowY: 'auto' }}>
+                                <table className="table-compact">
+                                    <thead>
+                                        <tr>
+                                            <th>Item</th>
+                                            <th>Status</th>
+                                            <th>Parado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {gargalos.slice(0, 5).map(p => (
                                             <tr key={p.id}>
-                                                <td>
+                                                <td style={{ fontSize: '11px' }}>
                                                     <div style={{ fontWeight: 600 }}>{p.tipo_assunto}</div>
-                                                    <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{p.assunto}</div>
-                                                </td>
-                                                <td>{p.responsavel_execucao}</td>
-                                                <td style={{ color: p.responsavel_revisao ? 'var(--text-primary)' : 'var(--accent-red)' }}>
-                                                    {p.responsavel_revisao ?? '⚠️ Sem revisor'}
+                                                    <div style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '120px' }}>{p.assunto}</div>
                                                 </td>
                                                 <td>
-                                                    {p.data_prazo
-                                                        ? format(parseISO(p.data_prazo), 'dd/MM/yyyy')
-                                                        : '—'}
+                                                    <span style={{ fontSize: '10px', background: 'var(--bg-secondary)', padding: '2px 6px', borderRadius: '4px', textTransform: 'capitalize' }}>
+                                                        {p.status_kanban?.replace('_', ' ')}
+                                                    </span>
                                                 </td>
                                                 <td>
                                                     <span style={{
-                                                        background: p.diasParado > 5 ? 'rgba(239,68,68,0.15)' : 'rgba(245,158,11,0.15)',
-                                                        color: p.diasParado > 5 ? '#f87171' : '#fbbf24',
-                                                        padding: '3px 8px',
-                                                        borderRadius: '6px',
+                                                        color: p.diasParado > 7 ? 'var(--accent-red)' : 'var(--accent-yellow)',
                                                         fontWeight: 700,
-                                                        fontSize: '12px'
+                                                        fontSize: '11px'
                                                     }}>
                                                         {p.diasParado}d
                                                     </span>
                                                 </td>
-                                                <td>
-                                                    <span className={`badge badge-risco-${risco}`}>{RISCO_LABELS[risco]}</span>
-                                                </td>
                                             </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Matriz completa por tipo */}
