@@ -9,7 +9,7 @@ import { differenceInDays, format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-    ResponsiveContainer, PieChart, Pie, Cell, Legend
+    ResponsiveContainer
 } from 'recharts';
 
 export default function DashboardPage() {
@@ -49,17 +49,6 @@ export default function DashboardPage() {
         return { total, finalizados, emExecucao, vencidos, criticos, atencao, mediaLeadTime };
     }, [todos, thresholdCritico, thresholdAtencao]);
 
-    const kanbanData = useMemo(() => {
-        const map: Record<string, number> = {};
-        todos.forEach(p => {
-            map[p.status_kanban] = (map[p.status_kanban] || 0) + 1;
-        });
-        return statusAtivos.map(s => ({
-            name: s.nome,
-            value: map[s.nome] || 0,
-            color: s.cor || '#6366f1',
-        }));
-    }, [todos, statusAtivos]);
 
     const tipoData = useMemo(() => {
         const map: Record<string, number> = {};
@@ -110,7 +99,36 @@ export default function DashboardPage() {
                 });
             });
 
-        return Object.values(porExecutor).sort((a, b) => a.nome.localeCompare(b.nome));
+        return Object.values(porExecutor).sort((a: any, b: any) => a.nome.localeCompare(b.nome));
+    }, [todos]);
+
+    const desempenhoPorRevisor = useMemo(() => {
+        const porRevisor: Record<string, any> = {};
+
+        todos
+            .filter(p => p.status_kanban.toUpperCase() !== 'FINALIZADO' && p.status_kanban.toUpperCase() !== 'ARQUIVO' && p.responsavel_revisao)
+            .forEach(p => {
+                const revisor = p.responsavel_revisao!;
+                if (!porRevisor[revisor]) {
+                    porRevisor[revisor] = {
+                        nome: revisor,
+                        tipos: {} as Record<string, { count: number; processos: { assunto: string; leadTime: number }[] }>
+                    };
+                }
+
+                if (!porRevisor[revisor].tipos[p.tipo_assunto]) {
+                    porRevisor[revisor].tipos[p.tipo_assunto] = { count: 0, procesos: [] };
+                }
+
+                const leadTime = differenceInDays(new Date(), parseISO(p.data_entrada));
+                porRevisor[revisor].tipos[p.tipo_assunto].count += 1;
+                porRevisor[revisor].tipos[p.tipo_assunto].processos.push({
+                    assunto: p.assunto,
+                    leadTime
+                });
+            });
+
+        return Object.values(porRevisor).sort((a: any, b: any) => a.nome.localeCompare(b.nome));
     }, [todos]);
 
     if (loading) {
@@ -245,7 +263,7 @@ export default function DashboardPage() {
                 )}
 
                 {/* Gráficos */}
-                <div className="dashboard-grid" style={{ marginBottom: '20px' }}>
+                <div style={{ marginBottom: '20px' }}>
                     <div className="card">
                         <div className="card-header">
                             <h2 className="card-title">📊 Processos por Tipo</h2>
@@ -282,27 +300,6 @@ export default function DashboardPage() {
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
-
-                    <div className="card">
-                        <div className="card-header">
-                            <h2 className="card-title">🔄 Status do Fluxo</h2>
-                        </div>
-                        <ResponsiveContainer width="100%" height={220}>
-                            <PieChart>
-                                <Pie data={kanbanData} cx="50%" cy="50%" innerRadius={55} outerRadius={80} paddingAngle={3} dataKey="value">
-                                    {kanbanData.map((entry, index) => (
-                                        <Cell key={index} fill={entry.color} />
-                                    ))}
-                                </Pie>
-                                <Tooltip
-                                    contentStyle={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', fontSize: '13px', color: '#1a202c', boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}
-                                    labelStyle={{ color: '#1a202c', fontWeight: 600 }}
-                                    itemStyle={{ color: '#4a5568' }}
-                                />
-                                <Legend iconSize={10} wrapperStyle={{ fontSize: '11px', color: 'var(--text-secondary)' }} />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </div>
                 </div>
 
                 {/* Desempenho por Executor */}
@@ -320,7 +317,7 @@ export default function DashboardPage() {
                         gap: '20px' 
                     }}>
                         {desempenhoPorExecutor.length > 0 ? (
-                            desempenhoPorExecutor.map(exec => {
+                            desempenhoPorExecutor.map((exec: any) => {
                                 const totalProcessos = Object.values(exec.tipos).reduce((acc: number, t: any) => acc + t.count, 0);
                                 return (
                                     <div key={exec.nome} className="card executor-card" style={{ 
@@ -374,8 +371,9 @@ export default function DashboardPage() {
                                                         {data.processos.slice(0, 5).map((proc: any, idx: number) => (
                                                             <div 
                                                                 key={idx} 
-                                                                title={proc.assunto}
-                                                                style={{ 
+                                                                className="tooltip-container"
+                                                            >
+                                                                <div style={{ 
                                                                     fontSize: '10px', 
                                                                     padding: '2px 6px', 
                                                                     background: 'white', 
@@ -384,10 +382,14 @@ export default function DashboardPage() {
                                                                     color: 'var(--text-secondary)',
                                                                     display: 'flex',
                                                                     alignItems: 'center',
-                                                                    gap: '2px'
-                                                                }}
-                                                            >
-                                                                ⏱️ {proc.leadTime}d
+                                                                    gap: '2px',
+                                                                    cursor: 'help'
+                                                                }}>
+                                                                    ⏱️ {proc.leadTime}d
+                                                                </div>
+                                                                <div className="tooltip-content">
+                                                                    {proc.assunto}
+                                                                </div>
                                                             </div>
                                                         ))}
                                                         {data.count > 5 && (
@@ -404,7 +406,117 @@ export default function DashboardPage() {
                             })
                         ) : (
                             <div className="card" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
-                                Nenhum processo ativo encontrado.
+                                Nenhum processo ativo encontrado para executores.
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Desempenho por Revisor */}
+                <div className="section-container" style={{ marginTop: '48px', paddingBottom: '40px' }}>
+                    <div className="section-header" style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <h2 className="card-title" style={{ margin: 0 }}>🔍 Desempenho por Revisor (Ativos)</h2>
+                        <span className="badge" style={{ backgroundColor: 'var(--accent-cyan)15', color: 'var(--accent-cyan)', fontWeight: 600 }}>
+                            {desempenhoPorRevisor.length} Revisores
+                        </span>
+                    </div>
+
+                    <div className="executor-grid" style={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', 
+                        gap: '20px' 
+                    }}>
+                        {desempenhoPorRevisor.length > 0 ? (
+                            desempenhoPorRevisor.map((rev: any) => {
+                                const totalProcessos = Object.values(rev.tipos).reduce((acc: number, t: any) => acc + t.count, 0);
+                                return (
+                                    <div key={rev.nome} className="card executor-card" style={{ 
+                                        padding: '20px',
+                                        transition: 'transform 0.2s, box-shadow 0.2s',
+                                        cursor: 'default'
+                                    }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                <div style={{ 
+                                                    width: '40px', 
+                                                    height: '40px', 
+                                                    borderRadius: '10px', 
+                                                    backgroundColor: 'var(--accent-cyan)', 
+                                                    color: 'white',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    fontWeight: 700,
+                                                    fontSize: '16px'
+                                                }}>
+                                                    {rev.nome.charAt(0).toUpperCase()}
+                                                </div>
+                                                <div>
+                                                    <div style={{ fontWeight: 700, fontSize: '15px', color: 'var(--text-primary)' }}>{rev.nome}</div>
+                                                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Revisor Ativo</div>
+                                                </div>
+                                            </div>
+                                            <div style={{ textAlign: 'right' }}>
+                                                <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--accent-cyan)', lineHeight: 1 }}>{totalProcessos}</div>
+                                                <div style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>Processos</div>
+                                            </div>
+                                        </div>
+
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                            {Object.entries(rev.tipos).map(([tipo, data]: [string, any]) => (
+                                                <div key={tipo} className="executor-task-group" style={{ 
+                                                    padding: '12px', 
+                                                    backgroundColor: 'var(--bg-secondary)', 
+                                                    borderRadius: '12px',
+                                                    border: '1px solid var(--border-color)'
+                                                }}>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                                        <span style={{ fontWeight: 600, fontSize: '13px' }}>{tipo}</span>
+                                                        <span className="badge" style={{ backgroundColor: 'var(--accent-blue)', color: 'white', fontSize: '10px', padding: '2px 6px' }}>
+                                                            {data.count}
+                                                        </span>
+                                                    </div>
+                                                    
+                                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                                        {data.processos.slice(0, 5).map((proc: any, idx: number) => (
+                                                            <div 
+                                                                key={idx} 
+                                                                className="tooltip-container"
+                                                            >
+                                                                <div style={{ 
+                                                                    fontSize: '10px', 
+                                                                    padding: '2px 6px', 
+                                                                    background: 'white', 
+                                                                    borderRadius: '4px',
+                                                                    border: '1px solid var(--border-color)',
+                                                                    color: 'var(--text-secondary)',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '2px',
+                                                                    cursor: 'help'
+                                                                }}>
+                                                                    ⏱️ {proc.leadTime}d
+                                                                </div>
+                                                                <div className="tooltip-content">
+                                                                    {proc.assunto}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                        {data.count > 5 && (
+                                                            <span style={{ fontSize: '10px', color: 'var(--text-secondary)', alignSelf: 'center' }}>
+                                                                +{data.count - 5}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        ) : (
+                            <div className="card" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
+                                Nenhum processo ativo encontrado para revisores.
                             </div>
                         )}
                     </div>

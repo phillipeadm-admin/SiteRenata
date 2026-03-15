@@ -544,6 +544,53 @@ body {
   }
 }
 
+/* Tooltip Customizado */
+.tooltip-container {
+  position: relative;
+  display: inline-flex;
+}
+
+.tooltip-trigger {
+  cursor: help;
+}
+
+.tooltip-content {
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 12px;
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-hover);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: var(--transition);
+  z-index: 100;
+  box-shadow: var(--shadow-lg);
+}
+
+.tooltip-content::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: var(--border-hover) transparent transparent transparent;
+}
+
+.tooltip-container:hover .tooltip-content {
+  opacity: 1;
+  visibility: visible;
+  bottom: 140%;
+}
+
 /* Table */
 .table-wrapper {
   overflow-x: auto;
