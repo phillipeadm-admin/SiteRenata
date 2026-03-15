@@ -11,7 +11,7 @@ const navItems = [
     { icon: '🔄', label: 'Rotinas', href: '/rotinas' },
     { icon: '📋', label: 'Kanban', href: '/kanban' },
     { icon: '📊', label: 'Dashboard', href: '/dashboard' },
-    { icon: '📈', label: 'Relatórios', href: '/relatorios' },
+    { icon: '📈', label: 'Gestão/Controle', href: '/relatorios' },
     { icon: '📁', label: 'Arquivo', href: '/arquivo' },
 ];
 

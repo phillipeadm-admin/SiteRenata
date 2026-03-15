@@ -128,13 +128,19 @@ export default function RelatoriosPage() {
 
     // Por tipo de assunto
     const porTipo = useMemo(() => {
-        const map: Record<string, { total: number; finalizados: number; criticos: number; somaLT: number }> = {};
+        const map: Record<string, { total: number; finalizados: number; executados: number; revisados: number; criticos: number; somaLT: number }> = {};
         processosFiltrados.forEach(p => {
             const t = p.tipo_assunto || 'Outros';
-            if (!map[t]) map[t] = { total: 0, finalizados: 0, criticos: 0, somaLT: 0 };
+            if (!map[t]) map[t] = { total: 0, finalizados: 0, executados: 0, revisados: 0, criticos: 0, somaLT: 0 };
             map[t].total++;
             const statusL = p.status_kanban?.toLowerCase() || '';
-            if (statusL.includes('finalizado') || statusL.includes('concluí')) map[t].finalizados++;
+            const isFinalizado = statusL.includes('finalizado') || statusL.includes('concluí');
+            
+            if (isFinalizado) {
+                map[t].finalizados++;
+                if (p.responsavel_execucao) map[t].executados++;
+                if (p.responsavel_revisao) map[t].revisados++;
+            }
             if (calcularRisco(p.data_prazo, p.status_kanban) === 'critico') map[t].criticos++;
             
             try {
@@ -149,6 +155,8 @@ export default function RelatoriosPage() {
             tipo,
             total: v.total,
             finalizados: v.finalizados,
+            executados: v.executados,
+            revisados: v.revisados,
             criticos: v.criticos,
             mediaLeadTime: v.total > 0 ? Math.round(v.somaLT / v.total) : 0,
             taxaConclusao: v.total > 0 ? Math.round((v.finalizados / v.total) * 100) : 0,
@@ -232,7 +240,7 @@ export default function RelatoriosPage() {
         <>
             <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                    <h1 className="page-title">📈 Relatórios & Matriz de Gestão</h1>
+                    <h1 className="page-title">📈 Gestão/Controle & Matriz</h1>
                     <p className="page-subtitle">Visão holística — gerado em {format(new Date(), 'dd/MM/yyyy HH:mm')}</p>
                 </div>
                 <div style={{ display: 'flex', gap: '16px' }}>
@@ -495,8 +503,9 @@ export default function RelatoriosPage() {
                                 <tr>
                                     <th>Tipo de Assunto</th>
                                     <th>Total</th>
+                                    <th>Executados</th>
+                                    <th>Revisados</th>
                                     <th>Finalizados</th>
-                                    <th>Críticos</th>
                                     <th>Lead Time Médio</th>
                                     <th>Taxa Conclusão</th>
                                 </tr>
@@ -506,12 +515,9 @@ export default function RelatoriosPage() {
                                     <tr key={t.tipo}>
                                         <td style={{ fontWeight: 600 }}>{t.tipo}</td>
                                         <td>{t.total}</td>
+                                        <td style={{ color: '#60a5fa', fontWeight: 700 }}>{t.executados}</td>
+                                        <td style={{ color: '#fbbf24', fontWeight: 700 }}>{t.revisados}</td>
                                         <td style={{ color: '#34d399' }}>{t.finalizados}</td>
-                                        <td>
-                                            {t.criticos > 0 ? (
-                                                <span className="badge badge-risco-critico">{t.criticos}</span>
-                                            ) : <span style={{ color: 'var(--text-muted)' }}>0</span>}
-                                        </td>
                                         <td>{t.mediaLeadTime} dias</td>
                                         <td>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
