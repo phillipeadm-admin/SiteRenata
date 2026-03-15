@@ -173,16 +173,19 @@ export default function RelatoriosPage() {
 
     // Dados para o card comparativo de produtividade
     const dadosProdutividade = useMemo(() => {
+        const totalGlobal = matrizExecutores.reduce((acc, m) => acc + m.execucao + m.revisao, 0);
+        
         return matrizExecutores
             .map(m => {
-                const total = m.execucao + m.revisao;
+                const totalIndividual = m.execucao + m.revisao;
                 return {
                     name: m.executor,
-                    entregas: total,
-                    percExecucao: total > 0 ? Math.round((m.execucao / total) * 100) : 0,
-                    percRevisao: total > 0 ? Math.round((m.revisao / total) * 100) : 0,
+                    entregas: totalIndividual,
+                    percExecucao: totalGlobal > 0 ? Math.round((m.execucao / totalGlobal) * 100) : 0,
+                    percRevisao: totalGlobal > 0 ? Math.round((m.revisao / totalGlobal) * 100) : 0,
                     executado: m.execucao,
-                    revisado: m.revisao
+                    revisado: m.revisao,
+                    larguraTotal: totalGlobal > 0 ? (totalIndividual / totalGlobal) * 100 : 0
                 };
             })
             .sort((a, b) => b.entregas - a.entregas);
@@ -360,19 +363,27 @@ export default function RelatoriosPage() {
                                                     <span>{idx + 1}. {item.name}</span>
                                                     <span style={{ color: 'var(--text-secondary)' }}>{item.entregas} entregas</span>
                                                 </div>
-                                                <div className="progress-bar" style={{ height: '10px', background: 'var(--bg-secondary)', display: 'flex', overflow: 'hidden' }}>
+                                                <div className="progress-bar" style={{ 
+                                                    height: '10px', 
+                                                    background: 'var(--bg-secondary)', 
+                                                    display: 'flex', 
+                                                    overflow: 'hidden',
+                                                    width: `${item.larguraTotal}%`,
+                                                    minWidth: '2px',
+                                                    borderRadius: '5px'
+                                                }}>
                                                     <div style={{ 
-                                                        width: `${item.percExecucao}%`, 
+                                                        width: `${(item.executado / (item.entregas || 1)) * 100}%`, 
                                                         background: 'var(--accent-blue)',
                                                         height: '100%',
                                                         transition: 'var(--transition)'
-                                                    }} title={`Execução: ${item.percExecucao}%`} />
+                                                    }} title={`Execução: ${item.executado}`} />
                                                     <div style={{ 
-                                                        width: `${item.percRevisao}%`, 
+                                                        width: `${(item.revisado / (item.entregas || 1)) * 100}%`, 
                                                         background: 'var(--accent-yellow)',
                                                         height: '100%',
                                                         transition: 'var(--transition)'
-                                                    }} title={`Revisão: ${item.percRevisao}%`} />
+                                                    }} title={`Revisão: ${item.revisado}`} />
                                                 </div>
                                                 <div style={{ display: 'flex', gap: '12px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' }}>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
