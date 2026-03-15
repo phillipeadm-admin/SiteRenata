@@ -77,7 +77,13 @@ export default function DashboardPage() {
         const porExecutor: Record<string, any> = {};
 
         todos
-            .filter(p => p.status_kanban.toUpperCase() !== 'FINALIZADO' && p.status_kanban.toUpperCase() !== 'ARQUIVO')
+            .filter(p => {
+                const status = p.status_kanban.toUpperCase();
+                return status !== 'FINALIZADO' && 
+                       status !== 'ARQUIVO' && 
+                       !status.includes('REVISÃO') &&
+                       !status.includes('REVISAO');
+            })
             .forEach(p => {
                 const executor = p.responsavel_execucao || 'Sem Responsável';
                 if (!porExecutor[executor]) {
@@ -311,7 +317,7 @@ export default function DashboardPage() {
                 <div className="section-container" style={{ marginTop: '32px' }}>
                     <div className="section-header" style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <h2 className="card-title" style={{ margin: 0 }}>👥 Desempenho por Executor (Ativos)</h2>
-                        <span className="badge" style={{ backgroundColor: 'var(--accent-indigo)15', color: 'var(--accent-indigo)', fontWeight: 600 }}>
+                        <span className="badge" style={{ backgroundColor: 'var(--accent-purple)15', color: 'var(--accent-purple)', fontWeight: 600 }}>
                             {desempenhoPorExecutor.length} Executores
                         </span>
                     </div>
@@ -330,7 +336,7 @@ export default function DashboardPage() {
                                         transition: 'transform 0.2s, box-shadow 0.2s',
                                         cursor: 'default',
                                         border: '1px solid rgba(99, 102, 241, 0.4)',
-                                        background: 'linear-gradient(135deg, var(--bg-card), rgba(99, 102, 241, 0.03))'
+                                        background: 'linear-gradient(135deg, var(--bg-card), rgba(99, 102, 241, 0.05))'
                                     }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -338,7 +344,7 @@ export default function DashboardPage() {
                                                     width: '40px', 
                                                     height: '40px', 
                                                     borderRadius: '10px', 
-                                                    backgroundColor: 'var(--accent-indigo)', 
+                                                    backgroundColor: 'var(--accent-purple)', 
                                                     color: 'white',
                                                     display: 'flex',
                                                     alignItems: 'center',
@@ -350,11 +356,11 @@ export default function DashboardPage() {
                                                 </div>
                                                 <div>
                                                     <div style={{ fontWeight: 700, fontSize: '15px', color: 'var(--text-primary)' }}>{exec.nome}</div>
-                                                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Executor Ativo</div>
+                                                    <div style={{ fontSize: '12px', color: 'var(--accent-purple)', fontWeight: 600 }}>Executor Ativo</div>
                                                 </div>
                                             </div>
                                             <div style={{ textAlign: 'right' }}>
-                                                <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--accent-indigo)', lineHeight: 1 }}>{totalProcessos}</div>
+                                                <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--accent-purple)', lineHeight: 1 }}>{totalProcessos}</div>
                                                 <div style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>Processos</div>
                                             </div>
                                         </div>
