@@ -72,6 +72,7 @@ export default function RelatoriosPage() {
             const statusLower = p.status_kanban?.toLowerCase() || '';
             const isFinalizado = statusLower.includes('finalizado') || statusLower.includes('concluí');
             const isCritico = !isFinalizado && calcularRisco(p.data_prazo, p.status_kanban) === 'critico';
+            const peso = p.complexo ? 2 : 1;
             
             const executoresRaw = p.responsavel_execucao ? p.responsavel_execucao.split(',').map(s => s.trim()).filter(Boolean) : ['Indefinido'];
             const revisoresRaw = p.responsavel_revisao ? p.responsavel_revisao.split(',').map(s => s.trim()).filter(Boolean) : [];
@@ -86,15 +87,15 @@ export default function RelatoriosPage() {
                     somaLeadTime: 0
                 };
                 
-                map[nome].total++;
-                if (isFinalizado) map[nome].finalizados++;
-                if (isCritico) map[nome].criticos++;
+                map[nome].total += peso;
+                if (isFinalizado) map[nome].finalizados += peso;
+                if (isCritico) map[nome].criticos += peso;
             });
 
             // Somas específicas de EXECUÇÃO e REVISÃO só ocorrem quando FINALIZADO
             if (isFinalizado) {
                 executoresRaw.forEach(ex => {
-                    if (map[ex]) map[ex].execucao++;
+                    if (map[ex]) map[ex].execucao += peso;
                     
                     try {
                         const dataEntrada = p.data_entrada ? parseISO(p.data_entrada) : new Date();
@@ -106,7 +107,7 @@ export default function RelatoriosPage() {
                 });
 
                 revisoresRaw.forEach(rev => {
-                    if (map[rev]) map[rev].revisao++;
+                    if (map[rev]) map[rev].revisao += peso;
                 });
             }
         });

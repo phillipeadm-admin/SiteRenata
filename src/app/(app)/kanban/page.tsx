@@ -292,6 +292,10 @@ export default function KanbanPage() {
                                                         <span>📅</span>
                                                         <span>Entrada: {format(parseISO(p.data_entrada), 'dd/MM/yy')}</span>
                                                     </div>
+                                                    <div className="kanban-card-meta-row" style={{ color: p.responsavel_revisao ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+                                                        <span>🔎</span>
+                                                        <span>Revisor: {p.responsavel_revisao || '—'}</span>
+                                                    </div>
                                                     {p.data_prazo && (
                                                         <div className="kanban-card-meta-row">
                                                             <span>⏰</span>
