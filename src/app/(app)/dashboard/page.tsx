@@ -114,13 +114,17 @@ export default function DashboardPage() {
         const porRevisor: Record<string, any> = {};
 
         todos
-            .filter(p => p.status_kanban.toUpperCase() !== 'FINALIZADO' && p.status_kanban.toUpperCase() !== 'ARQUIVO' && p.responsavel_revisao)
+            .filter(p => {
+                const status = p.status_kanban.toUpperCase();
+                return (status === '1ª REVISÃO' || status === 'REVISÃO FINAL' || status === '1A REVISAO' || status === 'REVISAO FINAL') && 
+                       p.responsavel_revisao;
+            })
             .forEach(p => {
                 const revisor = p.responsavel_revisao!;
                 if (!porRevisor[revisor]) {
                     porRevisor[revisor] = {
                         nome: revisor,
-                        tipos: {} as Record<string, { count: number; processos: { assunto: string; leadTime: number }[] }>
+                        tipos: {} as Record<string, { count: number; processos: { assunto: string; leadTime: number; executor: string }[] }>
                 };
             }
 
@@ -129,8 +133,8 @@ export default function DashboardPage() {
             }
 
                 const leadTimeEntry = p.datas_intermediarias?.find(d => 
-                    d.justificativa.toLowerCase().includes('1ª revisão') || 
-                    d.justificativa.toLowerCase().includes('primeira revisão')
+                    d.justificativa.toLowerCase().includes('revisão') || 
+                    d.justificativa.toLowerCase().includes('revisao')
                 );
                 const dateToUse = leadTimeEntry ? leadTimeEntry.data : p.data_entrada;
                 const leadTime = differenceInDays(new Date(), parseISO(dateToUse));

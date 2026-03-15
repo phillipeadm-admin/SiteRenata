@@ -112,13 +112,14 @@ export function useProcessos() {
             };
 
             // Se for para revisão, grava o marco
-            if (novoStatus === '1ª Revisão') {
+            if (novoStatus === '1ª Revisão' || novoStatus === 'Revisão Final') {
                 const novasDatas = [...(processo?.datas_intermediarias || [])];
-                const jaExiste = novasDatas.some(d => d.justificativa.includes('1ª Revisão'));
+                const justificativa = `Entrada em ${novoStatus}`;
+                const jaExiste = novasDatas.some(d => d.justificativa.includes(novoStatus));
                 if (!jaExiste) {
                     novasDatas.push({
                         data: new Date().toISOString().slice(0, 10),
-                        justificativa: 'Entrada em 1ª Revisão'
+                        justificativa
                     });
                     data.datas_intermediarias = novasDatas;
                 }
