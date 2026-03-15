@@ -306,73 +306,107 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Desempenho por Executor */}
-                <div className="card">
-                    <div className="card-header">
-                        <h2 className="card-title">👥 Desempenho por Executor (Ativos)</h2>
+                <div className="section-container" style={{ marginTop: '32px' }}>
+                    <div className="section-header" style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <h2 className="card-title" style={{ margin: 0 }}>👥 Desempenho por Executor (Ativos)</h2>
+                        <span className="badge" style={{ backgroundColor: 'var(--accent-indigo)15', color: 'var(--accent-indigo)', fontWeight: 600 }}>
+                            {desempenhoPorExecutor.length} Executores
+                        </span>
                     </div>
-                    <div className="table-wrapper">
-                        <table className="executor-performance-table">
-                            <thead>
-                                <tr>
-                                    <th style={{ width: '200px' }}>Executor</th>
-                                    <th>Carga de Trabalho (Tipo | Lead Time individual)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {desempenhoPorExecutor.length > 0 ? (
-                                    desempenhoPorExecutor.map(exec => (
-                                        <tr key={exec.nome}>
-                                            <td style={{ verticalAlign: 'top', paddingTop: '12px' }}>
-                                                <div style={{ fontWeight: 600, color: 'var(--accent-indigo)' }}>{exec.nome}</div>
-                                                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-                                                    {Object.values(exec.tipos).reduce((acc: number, t: any) => acc + t.count, 0)} processo(s) total
+
+                    <div className="executor-grid" style={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', 
+                        gap: '20px' 
+                    }}>
+                        {desempenhoPorExecutor.length > 0 ? (
+                            desempenhoPorExecutor.map(exec => {
+                                const totalProcessos = Object.values(exec.tipos).reduce((acc: number, t: any) => acc + t.count, 0);
+                                return (
+                                    <div key={exec.nome} className="card executor-card" style={{ 
+                                        padding: '20px',
+                                        transition: 'transform 0.2s, box-shadow 0.2s',
+                                        cursor: 'default'
+                                    }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                <div style={{ 
+                                                    width: '40px', 
+                                                    height: '40px', 
+                                                    borderRadius: '10px', 
+                                                    backgroundColor: 'var(--accent-indigo)', 
+                                                    color: 'white',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    fontWeight: 700,
+                                                    fontSize: '16px'
+                                                }}>
+                                                    {exec.nome.charAt(0).toUpperCase()}
                                                 </div>
-                                            </td>
-                                            <td>
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '10px 0' }}>
-                                                    {Object.entries(exec.tipos).map(([tipo, data]: [string, any]) => (
-                                                        <div key={tipo} style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
-                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                                                                <span style={{ fontWeight: 600, fontSize: '12px' }}>{tipo}</span>
-                                                                <span className="badge" style={{ backgroundColor: 'var(--accent-blue)15', color: 'var(--accent-blue)', fontSize: '10px' }}>
-                                                                    {data.count}
-                                                                </span>
-                                                            </div>
-                                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                                                                {data.processos.map((proc: any, idx: number) => (
-                                                                    <span 
-                                                                        key={idx} 
-                                                                        title={proc.assunto}
-                                                                        style={{ 
-                                                                            fontSize: '11px', 
-                                                                            padding: '2px 8px', 
-                                                                            background: 'var(--bg-secondary)', 
-                                                                            borderRadius: '4px',
-                                                                            border: '1px solid var(--border-color)',
-                                                                            display: 'flex',
-                                                                            alignItems: 'center',
-                                                                            gap: '4px'
-                                                                        }}
-                                                                    >
-                                                                        <span style={{ color: 'var(--text-secondary)' }}>⏱️ {proc.leadTime}d</span>
-                                                                    </span>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    ))}
+                                                <div>
+                                                    <div style={{ fontWeight: 700, fontSize: '15px', color: 'var(--text-primary)' }}>{exec.nome}</div>
+                                                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Executor Ativo</div>
                                                 </div>
-                                            </td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td colSpan={2} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
-                                            Nenhum processo ativo encontrado.
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
+                                            </div>
+                                            <div style={{ textAlign: 'right' }}>
+                                                <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--accent-indigo)', lineHeight: 1 }}>{totalProcessos}</div>
+                                                <div style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>Processos</div>
+                                            </div>
+                                        </div>
+
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                            {Object.entries(exec.tipos).map(([tipo, data]: [string, any]) => (
+                                                <div key={tipo} className="executor-task-group" style={{ 
+                                                    padding: '12px', 
+                                                    backgroundColor: 'var(--bg-secondary)', 
+                                                    borderRadius: '12px',
+                                                    border: '1px solid var(--border-color)'
+                                                }}>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                                        <span style={{ fontWeight: 600, fontSize: '13px' }}>{tipo}</span>
+                                                        <span className="badge" style={{ backgroundColor: 'var(--accent-blue)', color: 'white', fontSize: '10px', padding: '2px 6px' }}>
+                                                            {data.count}
+                                                        </span>
+                                                    </div>
+                                                    
+                                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                                        {data.processos.slice(0, 5).map((proc: any, idx: number) => (
+                                                            <div 
+                                                                key={idx} 
+                                                                title={proc.assunto}
+                                                                style={{ 
+                                                                    fontSize: '10px', 
+                                                                    padding: '2px 6px', 
+                                                                    background: 'white', 
+                                                                    borderRadius: '4px',
+                                                                    border: '1px solid var(--border-color)',
+                                                                    color: 'var(--text-secondary)',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '2px'
+                                                                }}
+                                                            >
+                                                                ⏱️ {proc.leadTime}d
+                                                            </div>
+                                                        ))}
+                                                        {data.count > 5 && (
+                                                            <span style={{ fontSize: '10px', color: 'var(--text-secondary)', alignSelf: 'center' }}>
+                                                                +{data.count - 5}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        ) : (
+                            <div className="card" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
+                                Nenhum processo ativo encontrado.
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
