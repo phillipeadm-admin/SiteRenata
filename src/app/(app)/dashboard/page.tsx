@@ -120,7 +120,12 @@ export default function DashboardPage() {
                 porRevisor[revisor].tipos[p.tipo_assunto] = { count: 0, processos: [] };
             }
 
-                const leadTime = differenceInDays(new Date(), parseISO(p.data_entrada));
+                const leadTimeEntry = p.datas_intermediarias?.find(d => 
+                    d.justificativa.toLowerCase().includes('1ª revisão') || 
+                    d.justificativa.toLowerCase().includes('primeira revisão')
+                );
+                const dateToUse = leadTimeEntry ? leadTimeEntry.data : p.data_entrada;
+                const leadTime = differenceInDays(new Date(), parseISO(dateToUse));
                 porRevisor[revisor].tipos[p.tipo_assunto].count += 1;
                 porRevisor[revisor].tipos[p.tipo_assunto].processos.push({
                     assunto: p.assunto,
@@ -323,7 +328,9 @@ export default function DashboardPage() {
                                     <div key={exec.nome} className="card executor-card" style={{ 
                                         padding: '20px',
                                         transition: 'transform 0.2s, box-shadow 0.2s',
-                                        cursor: 'default'
+                                        cursor: 'default',
+                                        border: '1px solid rgba(99, 102, 241, 0.4)',
+                                        background: 'linear-gradient(135deg, var(--bg-card), rgba(99, 102, 241, 0.03))'
                                     }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -383,7 +390,7 @@ export default function DashboardPage() {
                                                                     display: 'flex',
                                                                     alignItems: 'center',
                                                                     gap: '2px',
-                                                                    cursor: 'help'
+                                                                    cursor: 'default'
                                                                 }}>
                                                                     ⏱️ {proc.leadTime}d
                                                                 </div>
@@ -433,7 +440,9 @@ export default function DashboardPage() {
                                     <div key={rev.nome} className="card executor-card" style={{ 
                                         padding: '20px',
                                         transition: 'transform 0.2s, box-shadow 0.2s',
-                                        cursor: 'default'
+                                        cursor: 'default',
+                                        border: '1px solid rgba(6, 182, 212, 0.4)',
+                                        background: 'linear-gradient(135deg, var(--bg-card), rgba(6, 182, 212, 0.03))'
                                     }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -493,7 +502,7 @@ export default function DashboardPage() {
                                                                     display: 'flex',
                                                                     alignItems: 'center',
                                                                     gap: '2px',
-                                                                    cursor: 'help'
+                                                                    cursor: 'default'
                                                                 }}>
                                                                     ⏱️ {proc.leadTime}d
                                                                 </div>

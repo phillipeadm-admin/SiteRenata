@@ -105,14 +105,29 @@ export function useRotinas() {
 
     const moverKanban = useCallback(
         async (id: string, novoStatus: StatusKanban) => {
+            const rotina = rotinas.find(r => r.id === id);
             const data: Partial<Processo> = {
                 status_kanban: novoStatus,
                 data_finalizacao:
                     novoStatus.toLowerCase().includes('finalizado') ? new Date().toISOString() : null,
             };
+
+            // Se for para revisão, grava o marco
+            if (novoStatus === '1ª Revisão') {
+                const novasDatas = [...(rotina?.datas_intermediarias || [])];
+                const jaExiste = novasDatas.some(d => d.justificativa.includes('1ª Revisão'));
+                if (!jaExiste) {
+                    novasDatas.push({
+                        data: new Date().toISOString().slice(0, 10),
+                        justificativa: 'Entrada em 1ª Revisão'
+                    });
+                    data.datas_intermediarias = novasDatas;
+                }
+            }
+
             await atualizarRotina(id, data);
         },
-        [atualizarRotina]
+        [atualizarRotina, rotinas]
     );
 
     return {
