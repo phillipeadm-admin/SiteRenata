@@ -174,12 +174,17 @@ export default function RelatoriosPage() {
     // Dados para o card comparativo de produtividade
     const dadosProdutividade = useMemo(() => {
         return matrizExecutores
-            .map(m => ({
-                name: m.executor,
-                entregas: m.execucao + m.revisao,
-                executado: m.execucao,
-                revisado: m.revisao
-            }))
+            .map(m => {
+                const total = m.execucao + m.revisao;
+                return {
+                    name: m.executor,
+                    entregas: total,
+                    percExecucao: total > 0 ? Math.round((m.execucao / total) * 100) : 0,
+                    percRevisao: total > 0 ? Math.round((m.revisao / total) * 100) : 0,
+                    executado: m.execucao,
+                    revisado: m.revisao
+                };
+            })
             .sort((a, b) => b.entregas - a.entregas);
     }, [matrizExecutores]);
 
@@ -349,20 +354,35 @@ export default function RelatoriosPage() {
                             ) : (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                     {dadosProdutividade.slice(0, 5).map((item, idx) => {
-                                        const maxEntregas = dadosProdutividade[0].entregas || 1;
-                                        const perc = Math.round((item.entregas / maxEntregas) * 100);
                                         return (
-                                            <div key={item.name} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                            <div key={item.name} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 600 }}>
                                                     <span>{idx + 1}. {item.name}</span>
-                                                    <span>{item.entregas} entregas</span>
+                                                    <span style={{ color: 'var(--text-secondary)' }}>{item.entregas} entregas</span>
                                                 </div>
-                                                <div className="progress-bar" style={{ height: '8px', background: 'var(--bg-secondary)' }}>
-                                                    <div className="progress-fill" style={{ 
-                                                        width: `${perc}%`, 
-                                                        background: idx === 0 ? 'linear-gradient(90deg, #6366f1, #a855f7)' : 'var(--accent-blue)',
-                                                        opacity: 0.8 + (1 - idx/5) * 0.2
-                                                    }} />
+                                                <div className="progress-bar" style={{ height: '10px', background: 'var(--bg-secondary)', display: 'flex', overflow: 'hidden' }}>
+                                                    <div style={{ 
+                                                        width: `${item.percExecucao}%`, 
+                                                        background: 'var(--accent-blue)',
+                                                        height: '100%',
+                                                        transition: 'var(--transition)'
+                                                    }} title={`Execução: ${item.percExecucao}%`} />
+                                                    <div style={{ 
+                                                        width: `${item.percRevisao}%`, 
+                                                        background: 'var(--accent-yellow)',
+                                                        height: '100%',
+                                                        transition: 'var(--transition)'
+                                                    }} title={`Revisão: ${item.percRevisao}%`} />
+                                                </div>
+                                                <div style={{ display: 'flex', gap: '12px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                        <div style={{ width: '8px', height: '8px', borderRadius: '2px', background: 'var(--accent-blue)' }} />
+                                                        <span style={{ color: 'var(--accent-blue)' }}>Execução {item.percExecucao}%</span>
+                                                    </div>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                        <div style={{ width: '8px', height: '8px', borderRadius: '2px', background: 'var(--accent-yellow)' }} />
+                                                        <span style={{ color: 'var(--accent-yellow)' }}>Revisão {item.percRevisao}%</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         );

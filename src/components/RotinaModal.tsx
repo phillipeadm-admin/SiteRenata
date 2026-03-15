@@ -24,6 +24,7 @@ export default function RotinaModal({ rotina, onSave, onClose, onDelete }: Props
         data_prazo: rotina?.data_prazo ? rotina.data_prazo.slice(0, 10) : '',
         status_kanban: rotina?.status_kanban ?? (statusAtivos[0]?.nome ?? 'triagem'),
         recorrente: rotina?.recorrente ?? false,
+        complexo: rotina?.complexo ?? false,
         intervalo_dias: rotina?.intervalo_dias ?? 30,
         proxima_execucao: rotina?.proxima_execucao ? rotina.proxima_execucao.slice(0, 10) : '',
     });
@@ -291,6 +292,21 @@ export default function RotinaModal({ rotina, onSave, onClose, onDelete }: Props
                             <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginLeft: '26px', marginTop: '4px' }}>
                                 A rotina será criada automaticamente no Kanban na data definida.
                             </p>
+                        </div>
+
+                        {/* Complexo */}
+                        <div style={{ marginBottom: '20px', padding: '0 16px' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', userSelect: 'none' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={form.complexo}
+                                    onChange={(e) => setForm({ ...form, complexo: e.target.checked })}
+                                    style={{ width: '18px', height: '18px', accentColor: 'var(--accent-purple)' }}
+                                />
+                                <span style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)' }}>
+                                    🔥 Esta é uma rotina Complexa
+                                </span>
+                            </label>
                         </div>
 
                         {/* Datas Intermediárias */}

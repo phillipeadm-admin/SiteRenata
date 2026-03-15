@@ -24,6 +24,7 @@ export default function ProcessoModal({ processo, onSave, onClose, onDelete }: P
             : new Date().toISOString().slice(0, 10),
         data_prazo: processo?.data_prazo ? processo.data_prazo.slice(0, 10) : '',
         status_kanban: processo?.status_kanban ?? (statusAtivos[0]?.nome ?? 'Triagem / Backlog'),
+        complexo: processo?.complexo ?? false,
     });
 
     const [responsaveisExec, setResponsaveisExec] = useState<string[]>(
@@ -247,6 +248,21 @@ export default function ProcessoModal({ processo, onSave, onClose, onDelete }: P
                                     ))}
                                 </select>
                             </div>
+                        </div>
+
+                        {/* Complexo */}
+                        <div style={{ marginBottom: '16px' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', userSelect: 'none' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={form.complexo}
+                                    onChange={(e) => setForm({ ...form, complexo: e.target.checked })}
+                                    style={{ width: '18px', height: '18px', accentColor: 'var(--accent-purple)' }}
+                                />
+                                <span style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)' }}>
+                                    🔥 Este é um processo Complexo
+                                </span>
+                            </label>
                         </div>
 
                         {/* ===== DATAS INTERMEDIÁRIAS ===== */}

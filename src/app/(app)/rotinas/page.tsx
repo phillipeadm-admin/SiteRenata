@@ -166,7 +166,10 @@ export default function RotinasPage() {
                                                 </span>
                                             </td>
                                             <td style={{ maxWidth: '220px' }}>
-                                                <div style={{ fontSize: '13px' }}>{r.assunto}</div>
+                                                <div style={{ fontSize: '13px' }}>
+                                                    {r.assunto}
+                                                    {r.complexo && <span title="Complexo" style={{ marginLeft: '6px' }}>🔥</span>}
+                                                </div>
                                                 {r.observacoes && (
                                                     <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>
                                                         {r.observacoes.slice(0, 60)}...

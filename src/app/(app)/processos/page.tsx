@@ -188,7 +188,10 @@ export default function ProcessosPage() {
                                                 </div>
                                             </td>
                                             <td style={{ maxWidth: '200px' }}>
-                                                <div style={{ fontSize: '13px' }}>{p.assunto}</div>
+                                                <div style={{ fontSize: '13px' }}>
+                                                    {p.assunto}
+                                                    {p.complexo && <span title="Complexo" style={{ marginLeft: '6px' }}>🔥</span>}
+                                                </div>
                                                 {p.observacoes && (
                                                     <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>
                                                         {p.observacoes.slice(0, 60)}...

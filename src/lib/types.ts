@@ -56,6 +56,7 @@ export interface Processo {
     numero_processo: string | null;
     datas_intermediarias?: DataIntermediaria[] | null;
     recorrente?: boolean | null;
+    complexo?: boolean | null;
     intervalo_dias?: number | null;
     proxima_execucao?: string | null;
     checklist?: Record<string, boolean> | null;

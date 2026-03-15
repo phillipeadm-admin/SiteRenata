@@ -54,6 +54,7 @@ export function useProcessos() {
                 numero_processo: data.numero_processo ?? null,
                 datas_intermediarias: data.datas_intermediarias ?? null,
                 recorrente: data.recorrente ?? false,
+                complexo: data.complexo ?? false,
                 updated_at: new Date().toISOString()
             };
 
