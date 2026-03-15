@@ -284,7 +284,7 @@ export default function KanbanPage() {
                                                 </div>
 
                                                 <div className="kanban-card-meta">
-                                                    <div className="kanban-card-meta-row">
+                                                    <div className="kanban-card-meta-row" style={{ fontWeight: 400 }}>
                                                         <span>👤</span>
                                                         <span>{p.responsavel_execucao || '—'}</span>
                                                     </div>
@@ -292,7 +292,7 @@ export default function KanbanPage() {
                                                         <span>📅</span>
                                                         <span>Entrada: {format(parseISO(p.data_entrada), 'dd/MM/yy')}</span>
                                                     </div>
-                                                    <div className="kanban-card-meta-row" style={{ color: p.responsavel_revisao ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+                                                    <div className="kanban-card-meta-row" style={{ color: p.responsavel_revisao ? 'var(--text-primary)' : 'var(--text-muted)', fontWeight: 400 }}>
                                                         <span>🔎</span>
                                                         <span>Revisor: {p.responsavel_revisao || '—'}</span>
                                                     </div>
