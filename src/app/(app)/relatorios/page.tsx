@@ -383,17 +383,17 @@ export default function RelatoriosPage() {
                                                     borderRadius: '5px'
                                                 }}>
                                                     <div style={{ 
-                                                        width: `${(item.executado / (item.entregas || 1)) * 100}%`, 
+                                                        width: `${(item.executado / (item.pontos || 1)) * 100}%`, 
                                                         background: 'var(--accent-blue)',
                                                         height: '100%',
                                                         transition: 'var(--transition)'
-                                                    }} title={`Execução: ${item.executado}`} />
+                                                    }} title={`Execução: ${item.executado} pontos`} />
                                                     <div style={{ 
-                                                        width: `${(item.revisado / (item.entregas || 1)) * 100}%`, 
+                                                        width: `${(item.revisado / (item.pontos || 1)) * 100}%`, 
                                                         background: 'var(--accent-yellow)',
                                                         height: '100%',
                                                         transition: 'var(--transition)'
-                                                    }} title={`Revisão: ${item.revisado}`} />
+                                                    }} title={`Revisão: ${item.revisado} pontos`} />
                                                 </div>
                                                 <div style={{ display: 'flex', gap: '12px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' }}>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>

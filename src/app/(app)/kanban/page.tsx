@@ -284,7 +284,7 @@ export default function KanbanPage() {
                                                 </div>
 
                                                 <div className="kanban-card-meta">
-                                                    <div className="kanban-card-meta-row" style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
+                                                    <div className="kanban-card-meta-row" style={{ color: 'var(--text-secondary)', fontWeight: 700 }}>
                                                         <span>👤</span>
                                                         <span>{p.responsavel_execucao || '—'}</span>
                                                     </div>
