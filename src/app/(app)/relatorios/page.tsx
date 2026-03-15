@@ -69,7 +69,8 @@ export default function RelatoriosPage() {
         }> = {};
 
         processosFiltrados.forEach(p => {
-            const isFinalizado = p.status_kanban === 'finalizado';
+            const statusLower = p.status_kanban?.toLowerCase() || '';
+            const isFinalizado = statusLower.includes('finalizado') || statusLower.includes('concluí');
             const isCritico = !isFinalizado && calcularRisco(p.data_prazo, p.status_kanban) === 'critico';
             
             const executoresRaw = p.responsavel_execucao ? p.responsavel_execucao.split(',').map(s => s.trim()).filter(Boolean) : ['Indefinido'];
@@ -123,7 +124,8 @@ export default function RelatoriosPage() {
             const t = p.tipo_assunto || 'Outros';
             if (!map[t]) map[t] = { total: 0, finalizados: 0, criticos: 0, somaLT: 0 };
             map[t].total++;
-            if (p.status_kanban === 'finalizado') map[t].finalizados++;
+            const statusL = p.status_kanban?.toLowerCase() || '';
+            if (statusL.includes('finalizado') || statusL.includes('concluí')) map[t].finalizados++;
             if (calcularRisco(p.data_prazo, p.status_kanban) === 'critico') map[t].criticos++;
             
             try {
@@ -147,7 +149,7 @@ export default function RelatoriosPage() {
     // Gargalo: processos parados em Revisão
     const processosEmRevisao = useMemo(() =>
         processosFiltrados
-            .filter(p => p.status_kanban === 'aguardando_revisao')
+            .filter(p => p.status_kanban?.toLowerCase().includes('revisão'))
             .map(p => {
                 let diasParado = 0;
                 try {
