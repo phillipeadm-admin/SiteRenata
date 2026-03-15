@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useCadastros, Responsavel, TipoAssunto } from '@/hooks/useCadastros';
 import { FluxoEtapa, StatusKanbanDef } from '@/lib/types';
 
-type Aba = 'tipos' | 'responsaveis' | 'status' | 'fluxo' | 'geral';
+type Aba = 'tipos' | 'responsaveis' | 'status' | 'fluxo';
 
 export default function CadastrosPage() {
     const {
@@ -64,7 +64,6 @@ export default function CadastrosPage() {
                         { key: 'responsaveis', label: '👤 Responsáveis' },
                         { key: 'status', label: '📊 Kanban' },
                         { key: 'fluxo', label: '🌊 Fluxo' },
-                        { key: 'geral', label: '⚙️ Geral' },
                     ] as { key: Aba; label: string }[]).map(tab => (
                         <button
                             key={tab.key}
@@ -893,64 +892,6 @@ export default function CadastrosPage() {
                                 </div>
                             </>
                         )}
-                    </div>
-                )}
-                {/* ===== ABA: GERAL ===== */}
-                {aba === 'geral' && (
-                    <div className="card">
-                        <div className="card-header">
-                            <h2 className="card-title">⚙️ Configurações Gerais</h2>
-                            <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Defina limites globais para o sistema</p>
-                        </div>
-
-                        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '20px', alignItems: 'center' }}>
-                                <div>
-                                    <h3 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '4px' }}>Prazo Crítico (Dias)</h3>
-                                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                                        Quantidade de dias restantes para um processo ser marcado como <strong style={{ color: 'var(--accent-red)' }}>Crítico</strong> no dashboard.
-                                    </p>
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                    <input 
-                                        type="number"
-                                        className="form-input"
-                                        style={{ width: '80px' }}
-                                        value={cadastros.config.prazo_critico || '3'}
-                                        onChange={(e) => updateConfig('prazo_critico', e.target.value)}
-                                    />
-                                    <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>dias</span>
-                                </div>
-                            </div>
-
-                            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '24px', display: 'grid', gridTemplateColumns: '300px 1fr', gap: '20px', alignItems: 'center' }}>
-                                <div>
-                                    <h3 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '4px' }}>Prazo de Atenção (Dias)</h3>
-                                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                                        Quantidade de dias restantes para um processo ser marcado com <strong style={{ color: 'var(--accent-yellow)' }}>Atenção</strong> no dashboard.
-                                    </p>
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                    <input 
-                                        type="number"
-                                        className="form-input"
-                                        style={{ width: '80px' }}
-                                        value={cadastros.config.prazo_atencao || '7'}
-                                        onChange={(e) => updateConfig('prazo_atencao', e.target.value)}
-                                    />
-                                    <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>dias</span>
-                                </div>
-                            </div>
-
-                            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '24px' }}>
-                                <div style={{ background: 'rgba(99,102,241,0.05)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(99,102,241,0.1)' }}>
-                                    <h4 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--accent-purple)', marginBottom: '8px' }}>💡 Dica</h4>
-                                    <p style={{ fontSize: '12px', lineHeight: '1.6', color: 'var(--text-secondary)' }}>
-                                        Estas configurações afetam o cálculo de risco em todo o sistema. Processos com prazo ja ultrapassado serão automaticamente marcados como <strong>Vencidos</strong>.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 )}
             </div>
