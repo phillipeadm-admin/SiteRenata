@@ -870,8 +870,8 @@ tr:hover td {
 }
 
 .kanban-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-card), var(--card-color, var(--accent-purple)) 3%);
+  border: 1px solid color-mix(in srgb, var(--card-color, var(--accent-purple)), transparent 85%);
   border-radius: 12px;
   padding: 14px;
   cursor: pointer;
@@ -892,9 +892,9 @@ tr:hover td {
 }
 
 .kanban-card:hover {
-  border-color: var(--border-hover);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+  border-color: var(--card-color);
+  box-shadow: 0 8px 25px color-mix(in srgb, var(--card-color), transparent 85%);
+  transform: translateY(-3px);
 }
 
 .kanban-card-title {

@@ -218,7 +218,7 @@ export default function KanbanPage() {
                                                 onDragStart={(e: React.DragEvent) => onDragStart(e, p.id)}
                                                 onDragEnd={onDragEnd}
                                                 style={{
-                                                    '--card-color': getRiscoColor(p),
+                                                    '--card-color': colColor,
                                                     cursor: 'grab',
                                                     opacity: isDragging ? 0.45 : 1,
                                                     transform: isDragging ? 'scale(0.97)' : 'scale(1)',

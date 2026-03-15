@@ -70,40 +70,43 @@ export default function RelatoriosPage() {
 
         processosFiltrados.forEach(p => {
             const isFinalizado = p.status_kanban === 'finalizado';
+            const isCritico = !isFinalizado && calcularRisco(p.data_prazo, p.status_kanban) === 'critico';
             
-            // Lógica para Executor
-            const ex = p.responsavel_execucao || 'Indefinido';
-            if (!map[ex]) map[ex] = {
-                executor: ex, total: 0, execucao: 0,
-                revisao: 0, finalizados: 0, criticos: 0,
-                somaLeadTime: 0
-            };
-            
-            map[ex].total++;
-            if (isFinalizado) {
-                map[ex].execucao++;
-                map[ex].finalizados++;
-            }
-            if (!isFinalizado && calcularRisco(p.data_prazo, p.status_kanban) === 'critico') map[ex].criticos++;
+            const executoresRaw = p.responsavel_execucao ? p.responsavel_execucao.split(',').map(s => s.trim()).filter(Boolean) : ['Indefinido'];
+            const revisoresRaw = p.responsavel_revisao ? p.responsavel_revisao.split(',').map(s => s.trim()).filter(Boolean) : [];
 
-            // Lógica para Revisor (se finalizado)
-            if (isFinalizado && p.responsavel_revisao) {
-                const rev = p.responsavel_revisao;
-                if (!map[rev]) map[rev] = {
-                    executor: rev, total: 0, execucao: 0,
+            // Todos os envolvidos contam para o TOTAL de processos (auxilia no cálculo de Aproveitamento)
+            const todosEnvolvidos = Array.from(new Set([...executoresRaw, ...revisoresRaw]));
+            
+            todosEnvolvidos.forEach(nome => {
+                if (!map[nome]) map[nome] = {
+                    executor: nome, total: 0, execucao: 0,
                     revisao: 0, finalizados: 0, criticos: 0,
                     somaLeadTime: 0
                 };
-                map[rev].revisao++;
-                map[rev].total++; 
-            }
+                
+                map[nome].total++;
+                if (isFinalizado) map[nome].finalizados++;
+                if (isCritico) map[nome].criticos++;
+            });
 
-            try {
-                const dataEntrada = p.data_entrada ? parseISO(p.data_entrada) : new Date();
-                const dataFim = p.data_finalizacao ? parseISO(p.data_finalizacao) : new Date();
-                map[ex].somaLeadTime += Math.max(0, differenceInDays(dataFim, dataEntrada));
-            } catch (e) {
-                console.error("Erro ao calcular lead time para processo:", p.id, e);
+            // Somas específicas de EXECUÇÃO e REVISÃO só ocorrem quando FINALIZADO
+            if (isFinalizado) {
+                executoresRaw.forEach(ex => {
+                    if (map[ex]) map[ex].execucao++;
+                    
+                    try {
+                        const dataEntrada = p.data_entrada ? parseISO(p.data_entrada) : new Date();
+                        const dataFim = p.data_finalizacao ? parseISO(p.data_finalizacao) : new Date();
+                        if (map[ex]) map[ex].somaLeadTime += Math.max(0, differenceInDays(dataFim, dataEntrada));
+                    } catch (e) {
+                        console.error("Erro ao calcular lead time para executor:", ex, p.id, e);
+                    }
+                });
+
+                revisoresRaw.forEach(rev => {
+                    if (map[rev]) map[rev].revisao++;
+                });
             }
         });
 
@@ -167,7 +170,7 @@ export default function RelatoriosPage() {
         name: (m.executor || 'Indefinido').split(' ')[0],
         'EXECUÇÃO': m.execucao || 0,
         'REVISÃO': m.revisao || 0,
-        Finalizados: m.finalizados || 0,
+        'FINALIZADOS': m.finalizados || 0,
         Críticos: m.criticos || 0,
     })), [matrizExecutores]);
 
@@ -196,12 +199,27 @@ export default function RelatoriosPage() {
                     <h1 className="page-title">📈 Relatórios & Matriz de Gestão</h1>
                     <p className="page-subtitle">Visão holística — gerado em {format(new Date(), 'dd/MM/yyyy HH:mm')}</p>
                 </div>
-                <div style={{ display: 'flex', gap: '12px' }}>
+                <div style={{ display: 'flex', gap: '16px' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>Filtrar por Mês</label>
+                        <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Filtrar por Mês</label>
                         <select 
                             className="input-field" 
-                            style={{ padding: '6px 12px', fontSize: '13px', width: '160px' }}
+                            style={{ 
+                                padding: '8px 16px', 
+                                fontSize: '13px', 
+                                width: '180px',
+                                background: 'var(--bg-secondary)',
+                                border: '1px solid var(--border)',
+                                borderRadius: '12px',
+                                color: 'var(--text-primary)',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                transition: 'var(--transition)',
+                                outline: 'none',
+                                boxShadow: 'var(--shadow-sm)'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--accent-purple)'}
+                            onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
                             value={filtroMes}
                             onChange={(e) => setFiltroMes(e.target.value)}
                         >
@@ -209,10 +227,25 @@ export default function RelatoriosPage() {
                         </select>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>Filtrar por Ano</label>
+                        <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Filtrar por Ano</label>
                         <select 
                             className="input-field" 
-                            style={{ padding: '6px 12px', fontSize: '13px', width: '100px' }}
+                            style={{ 
+                                padding: '8px 16px', 
+                                fontSize: '13px', 
+                                width: '120px',
+                                background: 'linear-gradient(135deg, var(--bg-secondary), var(--bg-card))',
+                                border: '1px solid var(--border)',
+                                borderRadius: '12px',
+                                color: 'var(--text-primary)',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                transition: 'var(--transition)',
+                                outline: 'none',
+                                boxShadow: 'var(--shadow-sm)'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--accent-purple)'}
+                            onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
                             value={filtroAno}
                             onChange={(e) => setFiltroAno(e.target.value)}
                         >
@@ -311,7 +344,7 @@ export default function RelatoriosPage() {
                                 <Legend wrapperStyle={{ fontSize: '11px' }} />
                                 <Bar dataKey="EXECUÇÃO" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                                 <Bar dataKey="REVISÃO" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-                                <Bar dataKey="Finalizados" fill="#10b981" radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="FINALIZADOS" fill="#10b981" radius={[4, 4, 0, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
