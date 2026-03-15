@@ -66,6 +66,8 @@ export default function RelatoriosPage() {
             finalizados: number;
             criticos: number;
             somaLeadTime: number;
+            prodExecucao: number;
+            prodRevisao: number;
         }> = {};
 
         processosFiltrados.forEach(p => {
@@ -77,25 +79,28 @@ export default function RelatoriosPage() {
             const executoresRaw = p.responsavel_execucao ? p.responsavel_execucao.split(',').map(s => s.trim()).filter(Boolean) : ['Indefinido'];
             const revisoresRaw = p.responsavel_revisao ? p.responsavel_revisao.split(',').map(s => s.trim()).filter(Boolean) : [];
 
-            // Todos os envolvidos contam para o TOTAL de processos (auxilia no cálculo de Aproveitamento)
+            // Todos os envolvidos contam para o TOTAL de processos
             const todosEnvolvidos = Array.from(new Set([...executoresRaw, ...revisoresRaw]));
             
             todosEnvolvidos.forEach(nome => {
                 if (!map[nome]) map[nome] = {
                     executor: nome, total: 0, execucao: 0,
                     revisao: 0, finalizados: 0, criticos: 0,
-                    somaLeadTime: 0
+                    somaLeadTime: 0, prodExecucao: 0, prodRevisao: 0
                 };
                 
-                map[nome].total += peso;
-                if (isFinalizado) map[nome].finalizados += peso;
-                if (isCritico) map[nome].criticos += peso;
+                map[nome].total++;
+                if (isFinalizado) map[nome].finalizados++;
+                if (isCritico) map[nome].criticos++;
             });
 
-            // Somas específicas de EXECUÇÃO e REVISÃO só ocorrem quando FINALIZADO
+            // Somas específicas de EXECUÇÃO e REVISÃO
             if (isFinalizado) {
                 executoresRaw.forEach(ex => {
-                    if (map[ex]) map[ex].execucao += peso;
+                    if (map[ex]) {
+                        map[ex].execucao++;
+                        map[ex].prodExecucao += peso;
+                    }
                     
                     try {
                         const dataEntrada = p.data_entrada ? parseISO(p.data_entrada) : new Date();
@@ -107,7 +112,10 @@ export default function RelatoriosPage() {
                 });
 
                 revisoresRaw.forEach(rev => {
-                    if (map[rev]) map[rev].revisao += peso;
+                    if (map[rev]) {
+                        map[rev].revisao++;
+                        map[rev].prodRevisao += peso;
+                    }
                 });
             }
         });
@@ -172,24 +180,25 @@ export default function RelatoriosPage() {
         [processosFiltrados]
     );
 
-    // Dados para o card comparativo de produtividade
+    // Dados para o card comparativo de produtividade (Pontuação ponderada)
     const dadosProdutividade = useMemo(() => {
-        const totalGlobal = matrizExecutores.reduce((acc, m) => acc + m.execucao + m.revisao, 0);
+        const totalGlobal = matrizExecutores.reduce((acc, m) => acc + m.prodExecucao + m.prodRevisao, 0);
         
         return matrizExecutores
             .map(m => {
-                const totalIndividual = m.execucao + m.revisao;
+                const totalPontos = m.prodExecucao + m.prodRevisao;
                 return {
                     name: m.executor,
-                    entregas: totalIndividual,
-                    percExecucao: totalGlobal > 0 ? Math.round((m.execucao / totalGlobal) * 100) : 0,
-                    percRevisao: totalGlobal > 0 ? Math.round((m.revisao / totalGlobal) * 100) : 0,
-                    executado: m.execucao,
-                    revisado: m.revisao,
-                    larguraTotal: totalGlobal > 0 ? (totalIndividual / totalGlobal) * 100 : 0
+                    entregas: m.execucao + m.revisao, // Quantidade física
+                    pontos: totalPontos,
+                    percExecucao: totalPontos > 0 ? Math.round((m.prodExecucao / totalPontos) * 100) : 0,
+                    percRevisao: totalPontos > 0 ? Math.round((m.prodRevisao / totalPontos) * 100) : 0,
+                    executado: m.prodExecucao,
+                    revisado: m.prodRevisao,
+                    larguraTotal: totalGlobal > 0 ? (totalPontos / totalGlobal) * 100 : 0
                 };
             })
-            .sort((a, b) => b.entregas - a.entregas);
+            .sort((a, b) => b.pontos - a.pontos);
     }, [matrizExecutores]);
 
     // Gráfico de executor vs. carga
