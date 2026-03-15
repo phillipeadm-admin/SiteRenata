@@ -1,42 +1,102 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useProcessos } from '@/hooks/useProcessos';
+import { useRotinas } from '@/hooks/useRotinas';
 import { calcularRisco, RISCO_LABELS, TIPOS_ASSUNTO } from '@/lib/types';
-import { differenceInDays, format, parseISO } from 'date-fns';
+import { differenceInDays, format, parseISO, getMonth, getYear } from 'date-fns';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
     ResponsiveContainer, LineChart, Line, Legend
 } from 'recharts';
 
 export default function RelatoriosPage() {
-    const { processos, loading } = useProcessos();
+    const { processos, loading: loadingP } = useProcessos();
+    const { rotinas, loading: loadingR } = useRotinas();
+    const [filtroMes, setFiltroMes] = useState<string>('todos');
+    const [filtroAno, setFiltroAno] = useState<string>(new Date().getFullYear().toString());
+
+    const todos = useMemo(() => [...processos, ...rotinas], [processos, rotinas]);
+    const loading = loadingP || loadingR;
+
+    const anosDisponiveis = useMemo(() => {
+        const anos = new Set<string>();
+        anos.add(new Date().getFullYear().toString());
+        todos.forEach(p => {
+            if (p.data_entrada) {
+                anos.add(getYear(parseISO(p.data_entrada)).toString());
+            }
+        });
+        return Array.from(anos).sort((a, b) => b.localeCompare(a));
+    }, [todos]);
+
+    const meses = [
+        { value: 'todos', label: 'Todos os Meses' },
+        { value: '1', label: 'Janeiro' },
+        { value: '2', label: 'Fevereiro' },
+        { value: '3', label: 'Março' },
+        { value: '4', label: 'Abril' },
+        { value: '5', label: 'Maio' },
+        { value: '6', label: 'Junho' },
+        { value: '7', label: 'Julho' },
+        { value: '8', label: 'Agosto' },
+        { value: '9', label: 'Setembro' },
+        { value: '10', label: 'Outubro' },
+        { value: '11', label: 'Novembro' },
+        { value: '12', label: 'Dezembro' },
+    ];
+
+    const processosFiltrados = useMemo(() => {
+        return todos.filter(p => {
+            if (!p.data_entrada) return false;
+            const data = parseISO(p.data_entrada);
+            const mesMatch = filtroMes === 'todos' || (getMonth(data) + 1).toString() === filtroMes;
+            const anoMatch = filtroAno === 'todos' || getYear(data).toString() === filtroAno;
+            return mesMatch && anoMatch;
+        });
+    }, [todos, filtroMes, filtroAno]);
 
     // Matriz de gestão: Executor → métricas
     const matrizExecutores = useMemo(() => {
         const map: Record<string, {
             executor: string;
             total: number;
-            emExecucao: number;
-            aguardandoRevisao: number;
+            execucao: number;
+            revisao: number;
             finalizados: number;
             criticos: number;
             somaLeadTime: number;
-            somaTempoRevisao: number;
         }> = {};
 
-        processos.forEach(p => {
+        processosFiltrados.forEach(p => {
+            const isFinalizado = p.status_kanban === 'finalizado';
+            
+            // Lógica para Executor
             const ex = p.responsavel_execucao || 'Indefinido';
             if (!map[ex]) map[ex] = {
-                executor: ex, total: 0, emExecucao: 0,
-                aguardandoRevisao: 0, finalizados: 0, criticos: 0,
-                somaLeadTime: 0, somaTempoRevisao: 0
+                executor: ex, total: 0, execucao: 0,
+                revisao: 0, finalizados: 0, criticos: 0,
+                somaLeadTime: 0
             };
+            
             map[ex].total++;
-            if (p.status_kanban === 'em_execucao') map[ex].emExecucao++;
-            if (p.status_kanban === 'aguardando_revisao') map[ex].aguardandoRevisao++;
-            if (p.status_kanban === 'finalizado') map[ex].finalizados++;
-            if (calcularRisco(p.data_prazo, p.status_kanban) === 'critico') map[ex].criticos++;
+            if (isFinalizado) {
+                map[ex].execucao++;
+                map[ex].finalizados++;
+            }
+            if (!isFinalizado && calcularRisco(p.data_prazo, p.status_kanban) === 'critico') map[ex].criticos++;
+
+            // Lógica para Revisor (se finalizado)
+            if (isFinalizado && p.responsavel_revisao) {
+                const rev = p.responsavel_revisao;
+                if (!map[rev]) map[rev] = {
+                    executor: rev, total: 0, execucao: 0,
+                    revisao: 0, finalizados: 0, criticos: 0,
+                    somaLeadTime: 0
+                };
+                map[rev].revisao++;
+                map[rev].total++; 
+            }
 
             try {
                 const dataEntrada = p.data_entrada ? parseISO(p.data_entrada) : new Date();
@@ -51,12 +111,12 @@ export default function RelatoriosPage() {
             ...m,
             mediaLeadTime: m.total > 0 ? Math.round(m.somaLeadTime / m.total) : 0,
         }));
-    }, [processos]);
+    }, [processosFiltrados]);
 
     // Por tipo de assunto
     const porTipo = useMemo(() => {
         const map: Record<string, { total: number; finalizados: number; criticos: number; somaLT: number }> = {};
-        processos.forEach(p => {
+        processosFiltrados.forEach(p => {
             const t = p.tipo_assunto || 'Outros';
             if (!map[t]) map[t] = { total: 0, finalizados: 0, criticos: 0, somaLT: 0 };
             map[t].total++;
@@ -79,11 +139,11 @@ export default function RelatoriosPage() {
             mediaLeadTime: v.total > 0 ? Math.round(v.somaLT / v.total) : 0,
             taxaConclusao: v.total > 0 ? Math.round((v.finalizados / v.total) * 100) : 0,
         }));
-    }, [processos]);
+    }, [processosFiltrados]);
 
     // Gargalo: processos parados em Revisão
     const processosEmRevisao = useMemo(() =>
-        processos
+        processosFiltrados
             .filter(p => p.status_kanban === 'aguardando_revisao')
             .map(p => {
                 let diasParado = 0;
@@ -99,21 +159,21 @@ export default function RelatoriosPage() {
                 };
             })
             .sort((a, b) => b.diasParado - a.diasParado),
-        [processos]
+        [processosFiltrados]
     );
 
     // Gráfico de executor vs. carga
     const chartExecutor = useMemo(() => matrizExecutores.map(m => ({
         name: (m.executor || 'Indefinido').split(' ')[0],
-        'Em Execução': m.emExecucao || 0,
-        'Aguard. Revisão': m.aguardandoRevisao || 0,
+        'EXECUÇÃO': m.execucao || 0,
+        'REVISÃO': m.revisao || 0,
         Finalizados: m.finalizados || 0,
         Críticos: m.criticos || 0,
     })), [matrizExecutores]);
 
     if (loading) return <div style={{ padding: 40, color: 'var(--text-secondary)' }}>⏳ Carregando...</div>;
 
-    if (processos.length === 0) {
+    if (todos.length === 0) {
         return (
             <div className="page-body">
                 <div className="card">
@@ -131,10 +191,35 @@ export default function RelatoriosPage() {
 
     return (
         <>
-            <div className="page-header">
+            <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                     <h1 className="page-title">📈 Relatórios & Matriz de Gestão</h1>
                     <p className="page-subtitle">Visão holística — gerado em {format(new Date(), 'dd/MM/yyyy HH:mm')}</p>
+                </div>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>Filtrar por Mês</label>
+                        <select 
+                            className="input-field" 
+                            style={{ padding: '6px 12px', fontSize: '13px', width: '160px' }}
+                            value={filtroMes}
+                            onChange={(e) => setFiltroMes(e.target.value)}
+                        >
+                            {meses.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                        </select>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>Filtrar por Ano</label>
+                        <select 
+                            className="input-field" 
+                            style={{ padding: '6px 12px', fontSize: '13px', width: '100px' }}
+                            value={filtroAno}
+                            onChange={(e) => setFiltroAno(e.target.value)}
+                        >
+                            <option value="todos">Todos</option>
+                            {anosDisponiveis.map(a => <option key={a} value={a}>{a}</option>)}
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -150,17 +235,17 @@ export default function RelatoriosPage() {
                                 <tr>
                                     <th>Executor</th>
                                     <th>Total</th>
-                                    <th>Em Execução</th>
-                                    <th>Aguard. Revisão</th>
+                                    <th>EXECUÇÃO</th>
+                                    <th>REVISÃO</th>
                                     <th>Finalizados</th>
                                     <th>🚨 Críticos</th>
                                     <th>Lead Time Médio</th>
-                                    <th>Carga de Trabalho</th>
+                                    <th>Aproveitamento</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {matrizExecutores.map(m => {
-                                    const carga = m.total > 0 ? Math.round(((m.emExecucao + m.aguardandoRevisao) / m.total) * 100) : 0;
+                                    const carga = m.total > 0 ? Math.round(((m.execucao + m.revisao) / m.total) * 100) : 0;
                                     return (
                                         <tr key={m.executor}>
                                             <td style={{ fontWeight: 600 }}>{m.executor}</td>
@@ -172,8 +257,8 @@ export default function RelatoriosPage() {
                                                     fontWeight: 700
                                                 }}>{m.total}</span>
                                             </td>
-                                            <td style={{ color: '#60a5fa' }}>{m.emExecucao}</td>
-                                            <td style={{ color: '#fbbf24' }}>{m.aguardandoRevisao}</td>
+                                            <td style={{ color: '#60a5fa' }}>{m.execucao}</td>
+                                            <td style={{ color: '#fbbf24' }}>{m.revisao}</td>
                                             <td style={{ color: '#34d399' }}>{m.finalizados}</td>
                                             <td>
                                                 {m.criticos > 0 ? (
@@ -213,7 +298,7 @@ export default function RelatoriosPage() {
                 <div className="grid-2" style={{ marginBottom: '20px' }}>
                     <div className="card">
                         <div className="card-header">
-                            <h2 className="card-title">📊 Carga por Executor</h2>
+                            <h2 className="card-title">📊 EXECUÇÃO E REVISÃO POR RESPONSÁVEL</h2>
                         </div>
                         <ResponsiveContainer width="100%" height={240}>
                             <BarChart data={chartExecutor} margin={{ left: -20 }}>
@@ -224,8 +309,8 @@ export default function RelatoriosPage() {
                                     contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '10px', fontSize: '12px' }}
                                 />
                                 <Legend wrapperStyle={{ fontSize: '11px' }} />
-                                <Bar dataKey="Em Execução" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                                <Bar dataKey="Aguard. Revisão" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="EXECUÇÃO" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="REVISÃO" fill="#f59e0b" radius={[4, 4, 0, 0]} />
                                 <Bar dataKey="Finalizados" fill="#10b981" radius={[4, 4, 0, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
