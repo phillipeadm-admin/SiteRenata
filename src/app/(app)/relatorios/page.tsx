@@ -371,7 +371,7 @@ export default function RelatoriosPage() {
                                             <div key={item.name} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 600 }}>
                                                     <span>{idx + 1}. {item.name}</span>
-                                                    <span style={{ color: 'var(--text-secondary)' }}>{item.entregas} entregas</span>
+                                                    <span style={{ color: 'var(--text-secondary)' }}>{Math.round(item.larguraTotal)}% da produtividade</span>
                                                 </div>
                                                 <div className="progress-bar" style={{ 
                                                     height: '10px', 
